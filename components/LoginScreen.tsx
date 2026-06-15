@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Spinner } from "@/components/ob-primitives";
 
 const IG_ERRORS: Record<string, string> = {
   denied: "Instagram login was cancelled.",
@@ -15,6 +16,7 @@ export function LoginScreen({ igConfigured }: { igConfigured: boolean }) {
   const [role, setRole] = useState<"creator" | "business" | null>(null);
   const [inviteToken, setInviteToken] = useState("");
   const [error, setError] = useState("");
+  const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -81,11 +83,16 @@ export function LoginScreen({ igConfigured }: { igConfigured: boolean }) {
           />
           <a
             href={inviteToken.trim() ? creatorHref : undefined}
+            onClick={() => inviteToken.trim() && setNavigating(true)}
             className={`block w-full rounded-2xl py-3 text-center font-semibold text-white ${
               inviteToken.trim() ? "bg-brand" : "cursor-not-allowed bg-neutral-300"
-            }`}
+            } ${navigating ? "opacity-70 pointer-events-none" : ""}`}
           >
-            Continue with Instagram
+            {navigating ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner size={16} c="#fff" /> Connecting…
+              </span>
+            ) : "Continue with Instagram"}
           </a>
           {!igConfigured && (
             <p className="text-xs text-neutral-400">mock auth · dev only</p>
@@ -97,9 +104,14 @@ export function LoginScreen({ igConfigured }: { igConfigured: boolean }) {
         <div className="flex w-full max-w-xs flex-col gap-3">
           <a
             href={businessHref}
-            className="block w-full rounded-2xl bg-brand py-3 text-center font-semibold text-white"
+            onClick={() => setNavigating(true)}
+            className={`block w-full rounded-2xl bg-brand py-3 text-center font-semibold text-white ${navigating ? "opacity-70 pointer-events-none" : ""}`}
           >
-            Continue with Instagram
+            {navigating ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner size={16} c="#fff" /> Connecting…
+              </span>
+            ) : "Continue with Instagram"}
           </a>
           <p className="text-xs text-neutral-400">
             Your account will be reviewed before going live.

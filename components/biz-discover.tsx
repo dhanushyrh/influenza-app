@@ -53,7 +53,10 @@ function CreatorCard({ creator, workIdx, setWorkIdx, dx = 0, dragging, live, dep
   showRates?: boolean; onInfo?: () => void;
 }) {
   const cat = catOf(creator.category);
-  const work = creator.works[workIdx] || creator.works[0];
+  // Creators without portfolio posts have an empty `works` array — synthesize a
+  // placeholder from the creator's own gradient/emoji so the card still renders.
+  const work = creator.works[workIdx] || creator.works[0] ||
+    { from: creator.from, to: creator.to, emoji: creator.emoji, image: undefined, kind: "Post", views: 0, likes: 0, caption: "" } as Creator["works"][0];
   const rot = dx / 22;
   const lift = live ? 0 : depth;
   const transform = live

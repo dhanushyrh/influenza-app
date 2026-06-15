@@ -383,7 +383,7 @@ export function makePitchDeal(creator: Creator, biz: MyBiz, payload: { title: st
     title: payload.title,
     deliverables: payload.deliverables,
     offer: payload.amount, counter: null, stage: 0,
-    submission: { emoji: creator.works[0].emoji, from: creator.works[0].from, to: creator.works[0].to, caption: "", link: "", likes: 0, views: 0, comments: 0 },
+    submission: { emoji: creator.works[0]?.emoji ?? creator.emoji, from: creator.works[0]?.from ?? creator.from, to: creator.works[0]?.to ?? creator.to, caption: "", link: "", likes: 0, views: 0, comments: 0 },
     review: { rating: 5, text: "" },
     log: [
       { type: "date", label: "Today" },

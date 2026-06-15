@@ -137,8 +137,8 @@ export function Lookbook({ creator, onBack, onReachOut }: {
 
           {/* video pitch */}
           <SectionCard title="Video pitch" icon="video">
-            <button onClick={() => setWorkIdx(0)} style={{ width: "100%", position: "relative", height: 150, borderRadius: 14, border: "none", overflow: "hidden", cursor: "pointer", background: `linear-gradient(150deg, ${creator.works[0].from}, ${creator.works[0].to})` }}>
-              {creator.works[0].image && <img src={creator.works[0].image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+            <button onClick={() => setWorkIdx(0)} style={{ width: "100%", position: "relative", height: 150, borderRadius: 14, border: "none", overflow: "hidden", cursor: "pointer", background: `linear-gradient(150deg, ${creator.works[0]?.from ?? creator.from}, ${creator.works[0]?.to ?? creator.to})` }}>
+              {creator.works[0]?.image && <img src={creator.works[0].image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)" }} />
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ width: 54, height: 54, borderRadius: 999, background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 18px rgba(0,0,0,0.25)" }}>

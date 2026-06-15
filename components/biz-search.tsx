@@ -99,7 +99,9 @@ function FilterSheet({ initial, onClose, onApply }: { initial: Filters; onClose:
 
 function GridCard({ c, onOpen, showRates }: { c: Creator; onOpen: () => void; showRates?: boolean }) {
   const cat = catOf(c.category);
-  const w = c.works[0];
+  // Creators without any portfolio posts have an empty `works` array — fall back
+  // to the creator's own gradient/emoji so the card still renders.
+  const w = c.works[0] ?? { from: c.from, to: c.to, emoji: c.emoji, image: undefined };
   return (
     <button onClick={onOpen} style={{ textAlign: "left", background: "#fff", border: `1px solid ${T.line}`, borderRadius: 18, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 8px rgba(31,17,16,0.04)", WebkitTapHighlightColor: "transparent" }}>
       <div style={{ position: "relative", aspectRatio: "1.1", background: `linear-gradient(150deg, ${w.from}, ${w.to})` }}>

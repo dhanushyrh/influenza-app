@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { T } from "@/lib/ob-tokens";
 import { Icon } from "@/components/ob-icons";
+import { Spinner } from "@/components/ob-primitives";
 
 const IG_ERRORS: Record<string, string> = {
   denied:             "Instagram login was cancelled.",
@@ -91,6 +92,9 @@ function RoleCard({ emoji, title, desc, accent, onClick, href }: {
   emoji: string; title: string; desc: string; accent: "rose" | "mint";
   onClick?: () => void; href?: string;
 }) {
+  // Tapping a role triggers a full OAuth redirect that can take a few seconds.
+  // Show a spinner immediately so the PWA doesn't feel frozen during the wait.
+  const [navigating, setNavigating] = useState(false);
   const ac   = accent === "mint" ? T.mint : T.rose;
   const grad = accent === "mint"
     ? "linear-gradient(135deg,#eafaf1,#d6f1e3)"
@@ -103,18 +107,20 @@ function RoleCard({ emoji, title, desc, accent, onClick, href }: {
         <p style={{ margin: 0, fontFamily: T.display, fontWeight: 700, fontSize: 18, color: T.ink }}>{title}</p>
         <p style={{ margin: "3px 0 0", fontFamily: T.body, fontSize: 12.5, color: T.ink2, lineHeight: 1.4 }}>{desc}</p>
       </div>
-      <Icon name="arrowR" size={20} c={ac} />
+      {navigating ? <Spinner size={20} c={ac} /> : <Icon name="arrowR" size={20} c={ac} />}
     </>
   );
 
   const style: React.CSSProperties = {
     width: "100%", display: "flex", alignItems: "center", gap: 14, textAlign: "left",
     padding: 17, borderRadius: 20, border: `1px solid ${T.line}`, background: grad,
-    boxShadow: "0 4px 16px rgba(31,17,16,0.05)", textDecoration: "none", cursor: "pointer",
+    boxShadow: "0 4px 16px rgba(31,17,16,0.05)", textDecoration: "none",
+    cursor: navigating ? "progress" : "pointer", opacity: navigating ? 0.7 : 1,
+    pointerEvents: navigating ? "none" : "auto",
   };
 
   if (href) {
-    return <a href={href} style={style}>{inner}</a>;
+    return <a href={href} style={style} onClick={() => setNavigating(true)}>{inner}</a>;
   }
   return <button onClick={onClick} style={style}>{inner}</button>;
 }
