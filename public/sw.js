@@ -1,7 +1,7 @@
 /* Influenza service worker — installability + conservative offline caching.
    Bump CACHE when shipping changes so old caches are cleared. */
-const CACHE = "influenza-v1";
-const PRECACHE = ["/", "/login", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
+const CACHE = "influenza-v2";
+const PRECACHE = ["/", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -22,8 +22,16 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  // Never cache API / auth — always hit the network.
-  if (url.origin === self.location.origin && url.pathname.startsWith("/api/")) return;
+  const sameOrigin = url.origin === self.location.origin;
+
+  // Never cache API/auth — always hit the network.
+  if (sameOrigin && url.pathname.startsWith("/api/")) return;
+
+  // Never cache React Server Component payloads or Next data — these are tied
+  // to the current build id, so a stale copy points at chunk hashes that no
+  // longer exist after a redeploy (causing 404s). Always go to the network.
+  const isRSC = url.searchParams.has("_rsc") || request.headers.get("RSC") === "1";
+  if (sameOrigin && (isRSC || url.pathname.startsWith("/_next/data/"))) return;
 
   // Navigations: network-first, fall back to cached shell when offline.
   if (request.mode === "navigate") {
@@ -39,8 +47,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Same-origin static assets: cache-first.
-  if (url.origin === self.location.origin) {
+  // Immutable, content-hashed build assets: cache-first (the URL changes per
+  // build, so a cache hit is always the right file).
+  if (sameOrigin && url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
       caches.match(request).then((cached) =>
         cached ||
@@ -48,8 +57,23 @@ self.addEventListener("fetch", (event) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
           return res;
-        }).catch(() => cached)
+        })
       )
+    );
+    return;
+  }
+
+  // Other same-origin assets (icons, manifest, etc.): network-first so a
+  // redeploy is picked up immediately, falling back to cache when offline.
+  if (sameOrigin) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(request))
     );
   }
 });
