@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-[#faf8f6] text-[#1f1110] antialiased;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes sheetUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes izBurst {
+  0%   { transform: translate(0,0) scale(0.4); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1); opacity: 0; }
+}
+@keyframes izPop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  55%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes izRise {
+  0%   { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes izPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.06); }
+}

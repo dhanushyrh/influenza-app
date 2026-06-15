@@ -1,0 +1,68 @@
+﻿Executive Summary
+The vision is to build a two-sided marketplace application connecting local businesses with hyper-local influencers (micro-influencers) without intermediaries. The platform will utilize a gamified, "Tinder-style" swipe interface to eliminate decision fatigue, allowing businesses to rapidly browse verified local creators. Both businesses and influencers will authenticate using Instagram to verify identity and pull performance metrics. To solve the "chicken and egg" marketplace problem, the platform will launch with a hyper-focused, concierge-style Minimum Viable Product (MVP) before automating the tech.
+Technical Prerequisites: The Meta API Reality
+Because the platform relies on Instagram for verification and metrics, strict adherence to Meta's developer guidelines is required.
+Legal & Developer Requirements
+* You must register as a Meta Developer and create an app dashboard to access the Instagram Graph API.
+* A live, compliant Privacy Policy URL hosted on a website is mandatory for Meta to approve Instagram Login.
+* Because the app will serve professional accounts you do not personally own, it requires "Advanced Access" and must pass Meta's formal App Review process, including a screencast video demonstrating data usage.
+API Capabilities & Permissions
+* The platform must use "Instagram API with Instagram Login" or "Facebook Login for Business" alongside a webhooks server.
+* Required permissions include instagram_business_basic and instagram_business_manage_insights.
+* You can query account-level metrics like impressions, profile_views, and reach over a 24-hour period using the GET /<INSTAGRAM_USER_ID>/insights endpoint.
+* You can calculate engagement on specific content by querying engagement, impressions, and reach via the GET /<INSTAGRAM_MEDIA_ID>/insights endpoint.
+* Demographic data (like audience age and gender) can be pulled from audience insights when the influencer authenticates.
+API Hard Limitations
+* The API only returns data for media owned by Instagram Professional (Business or Creator) accounts, not personal accounts.
+* User metrics data is only stored by Meta for up to 90 days.
+* Some metrics are completely unavailable for accounts with fewer than 100 followers.
+* You can only pull insights for a single user at a time, meaning massive bulk pulls are impossible.
+* The API does not reliably expose the user's current physical location, so location must be manually selected during onboarding.
+* The API does not expose a user's "last active" online status due to privacy rules.
+Product Architecture & UX Design
+To reduce initial friction for businesses testing the MVP, the platform will be built as a Mobile-Optimized Web App (Progressive Web App), moving to native iOS/Android apps only after market validation.
+Recommended Tech Stack
+* Frontend: React.js or Next.js for a mobile-first, highly responsive swipe UI.
+* Backend: Supabase or Firebase for real-time caching, authentication, and messaging.
+* Background Sync: Cron jobs on the server to quietly refresh influencer metrics weekly, preventing API rate limits and ensuring fast UI loading times.
+The "Tinder-Style" Swipe Logic
+* To ensure instant loading, the app's backend will fetch and calculate an influencer's metrics (average likes, comments, engagement rate) when they sign up and store them in the database.
+* When a business logs in, the database instantly delivers a "deck" of 10 to 20 cached local influencer cards.
+* A right swipe (Interest) opens the influencer's full Lookbook profile, while a left swipe hides the card from the feed.
+The Dual-Profile System
+* Influencer Profiles: Displays a verified "Lookbook" including follower count, average views, average likes/comments, and a calculated engagement rate: ((Average Likes + Average Comments) / Total Followers) * 100.
+* Business Profiles: Displays their Instagram bio, follower count, a "vibe check" grid of their last 6 posts, their target demographic, and their "Hiring Status".
+* Hiring Status Toggle: Businesses can set their profile to "Actively Looking" (boosted to the top of influencer feeds with campaign briefs), "Looking Out" (open to general pitches), or "Not Looking" (hidden from the feed to prevent spam).
+Business & Monetization Strategy
+The monetization roadmap utilizes a hybrid approach, starting free to build supply and scaling into a transaction/subscription model.
+Monetization Phase
+	Mechanism
+	Strategic Purpose
+	1. The Freemium Hook
+	Basic profiles are free, allowing businesses to view the swipe deck and metrics without paying.
+	Lowers the barrier to entry and builds the initial user base while mitigating the "chicken and egg" problem.
+	2. The Escrow Loop
+	A 10% transaction fee taken from successful deals processed on-platform.
+	Aligns the platform's success with the users' success ("grow as you grow").
+	3. Pay-Per-Pitch Credits
+	Businesses receive a limited number of free swipes, then must purchase credits (e.g., ₹1000 for 10 credits) to initiate further messages.
+	Generates upfront revenue and acts as a natural quality filter to prevent businesses from spamming creators.
+	4. Premium Subscriptions
+	Agencies pay a monthly fee (e.g., ₹3000) for unlimited right swipes, priority placement, and advanced demographic filters.
+	Creates predictable, recurring revenue from power users once the marketplace is highly populated.
+	The MVP Execution Roadmap
+To validate the concept quickly and cheaply, the rollout will follow a strict three-phase plan focused on a single geographic market (e.g., Bengaluru) and a specific niche (e.g., food bloggers).
+Phase 1: The Manual Prototype (Weeks 1-3)
+* Manually DM and recruit 20 to 30 local micro-influencers.
+* Build a simple, no-code website (Webflow/Softr) to act as a Lookbook showcasing these influencers and their self-reported rates.
+* Manually pitch this curated list to 10-20 local businesses; if a match occurs, facilitate the introduction and the 10% payment cut manually.
+Phase 2: Core Technology Build (Weeks 4-8)
+* Develop the dual onboarding flows for Businesses and Influencers.
+* Implement the Meta API integration for Instagram Login to authenticate accounts and begin pulling reach and engagement data.
+* Build the swipe directory categorized by niche and proximity, alongside a simple in-app messaging system.
+Phase 3: The Payment & Escrow Loop (Weeks 9-12)
+* Integrate a multi-party payment processor like Stripe Connect.
+* Launch the escrow flow: when a pitch is accepted, the business's card is charged, and funds are held by the platform.
+* Once the influencer's post is verified, the system automatically releases 90% of the funds to the creator and retains the 10% platform fee.
+Conclusions
+Building a two-sided local influencer marketplace requires extreme focus on supply-side seeding. Do not charge businesses until a highly responsive group of influencers is actively using the platform. By starting with a friction-free Web App, manufacturing early success through manual onboarding, and leveraging a familiar "swipe" UX, this application has strong potential to capture the growing hyper-local marketing sector.
