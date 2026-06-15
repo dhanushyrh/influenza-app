@@ -40,7 +40,9 @@ const DEFAULT_CREATOR  = CREATOR_PERSONAS["mock-onboard-deepa"];
 const DEFAULT_BUSINESS = BUSINESS_PERSONAS[0];
 
 export async function GET(req: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
+  // Disabled in production unless explicitly opted in (demo deploys without Meta
+  // OAuth credentials). Set ALLOW_MOCK_AUTH=true on the host to enable.
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_MOCK_AUTH !== "true") {
     return NextResponse.json({ error: "not available in production" }, { status: 404 });
   }
 
