@@ -8,6 +8,11 @@
 
 body {
   @apply bg-[#faf8f6] text-[#1f1110] antialiased;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 @keyframes fadeIn {

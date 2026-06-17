@@ -57,11 +57,11 @@ export function BizCampBurst({ seed }: { seed: number }) {
 // ── Campaigns card on the business profile ──
 export function CampaignsCard({ campaigns, onNew }: { campaigns: Campaign[]; onNew: () => void }) {
   return (
-    <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 20, padding: 16, marginBottom: 13 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13 }}>
-        <Icon name="doc" size={17} c={T.rose} />
-        <h3 style={{ margin: 0, fontFamily: T.display, fontSize: 15.5, fontWeight: 700, color: T.ink, flex: 1 }}>Campaigns</h3>
-        <button onClick={onNew} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", background: `linear-gradient(135deg, ${T.rose}, ${T.roseDark})`, color: "#fff", fontFamily: T.body, fontSize: 12.5, fontWeight: 700, boxShadow: `0 4px 12px ${T.roseTint2}` }}>
+    <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 20, padding: 16, marginBottom: 13, maxWidth: "100%", boxSizing: "border-box", overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13, minWidth: 0 }}>
+        <Icon name="doc" size={17} c={T.rose} style={{ flexShrink: 0 }} />
+        <h3 style={{ margin: 0, fontFamily: T.display, fontSize: 15.5, fontWeight: 700, color: T.ink, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Campaigns</h3>
+        <button onClick={onNew} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", background: `linear-gradient(135deg, ${T.rose}, ${T.roseDark})`, color: "#fff", fontFamily: T.body, fontSize: 12.5, fontWeight: 700, boxShadow: `0 4px 12px ${T.roseTint2}`, flexShrink: 0 }}>
           <Icon name="plus" size={14} c="#fff" w={2.4} />New
         </button>
       </div>

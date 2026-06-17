@@ -51,7 +51,8 @@ export default async function BizPage() {
   ]);
 
   return (
-    <BizApp
+    <div style={{ height: "100svh", width: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <BizApp
       initialBiz={{
         name: profile.name ?? undefined,
         bio: profile.bio ?? undefined,
@@ -64,5 +65,6 @@ export default async function BizPage() {
       initialDeals={deals}
       initialCampaigns={campaigns}
     />
+    </div>
   );
 }

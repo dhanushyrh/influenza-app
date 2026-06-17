@@ -1,58 +1,113 @@
-# Influenza — Hyper-local Influencer Marketplace (MVP)
+# Influenza — Hyper-local Influencer Marketplace
 
 A two-sided marketplace connecting **local businesses** with **hyper-local micro-influencers**, using a gamified, Tinder-style swipe interface. Both sides authenticate via Instagram to verify identity and pull performance metrics.
 
-> This repository is the **MVP scaffold**: planning docs, database design, and a runnable Next.js skeleton with key screens stubbed. Instagram (Meta Graph API) and payments (Stripe Connect) are **stubbed with mock data** in this phase and wired up later per the roadmap.
+**Launch focus:** Bengaluru · food & drinks niche · supply-first (concierge creator invites).
 
-## What's here
+## LLM Wiki (start here for development)
+
+This repo includes a [Karpathy-style LLM wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) for compounding project knowledge:
+
+| Path | Purpose |
+|------|---------|
+| **[wiki/index.md](wiki/index.md)** | Wiki catalog — **start here** |
+| [wiki/overview.md](wiki/overview.md) | Product vision & MVP scope |
+| [wiki/file-map.md](wiki/file-map.md) | Feature → file lookup (fixes & enhancements) |
+| [wiki/implementation-status.md](wiki/implementation-status.md) | What's built vs planned |
+| [raw/index.md](raw/index.md) | Immutable source catalog (docs, schema, entry points) |
+| [WIKI.md](WIKI.md) | How agents maintain the wiki |
+
+For coding commands and patterns, see also [CLAUDE.md](CLAUDE.md).
+
+## What's built (Phase 2 snapshot)
+
+Beyond the original scaffold, the repo now includes:
+
+- **Business SPA** (`/biz`) — Discover swipe deck, Search, Collabs, Profile, campaigns
+- **Creator SPA** (`/inf`) — Home, Briefs, Collabs, Wallet, Profile, credits economy
+- **Dual onboarding wizards** — creator (invite) + business (self-serve) with completion APIs
+- **Instagram OAuth** + dev mock auth
+- **Deal pipeline** — pitches → deals, shared Deal Room, DB persistence
+- **Campaigns & briefs** — businesses publish live briefs; creators browse and propose
+- **Supabase** — 15 migrations, RLS, storage buckets, seeded test data
+
+Still stubbed: Stripe escrow, IG metrics cron, Supabase Auth sessions, business swipe persistence.
+
+## Repository layout
 
 ```
 Influenza/
-├── README.md                 ← you are here
-├── docs/                     ← planning, PRD, architecture, integration plans
-│   ├── 01-mvp-prd.md
-│   ├── 02-architecture.md
-│   ├── 03-database-design.md
-│   ├── 04-instagram-integration.md
-│   ├── 05-payments-escrow.md
-│   ├── 06-onboarding-flows.md
-│   └── tasks/                ← granular task lists per feature area
-├── db/
-│   ├── schema.sql            ← Supabase/Postgres migration (source of truth)
-│   └── seed.sql              ← demo data for local dev
-├── app/                      ← Next.js App Router skeleton (stubbed screens)
-├── components/               ← shared UI (swipe card, stat bars, etc.)
-├── lib/                      ← types, mock data, supabase client stub
-└── public/
+├── wiki/                     ← LLM-maintained knowledge base (read first)
+├── raw/                      ← source catalog for wiki ingest
+├── WIKI.md                   ← wiki maintenance schema
+├── CLAUDE.md                 ← agent coding guide
+├── docs/                     ← planning PRD, architecture, task checklists
+├── db/                       ← schema.sql + seed (source of truth)
+├── supabase/migrations/      ← applied migrations
+├── app/                      ← Next.js App Router (pages + API)
+│   ├── biz/                  ← business authenticated SPA
+│   ├── inf/                  ← creator authenticated SPA
+│   ├── onboarding/             ← creator wizard
+│   └── api/                  ← route handlers
+├── components/               ← UI (swipe, lookbook, deal room, nav)
+└── lib/                      ← queries.ts (data layer), types, auth, mocks
 ```
 
 ## Stack
 
-- **Frontend:** Next.js (App Router) — mobile-first PWA, responsive swipe UI
-- **Backend:** Supabase (Postgres + Auth + Realtime + Storage)
-- **Background sync:** scheduled cron to refresh influencer metrics weekly (avoids Meta rate limits)
-- **Integrations (later):** Meta Instagram Graph API, Stripe Connect
+- **Frontend:** Next.js 14 (App Router) — mobile-first PWA
+- **Backend:** Supabase (Postgres + RLS + Storage)
+- **Auth (current):** Instagram OAuth + httpOnly cookies (`inf_uid`, `bus_uid`)
+- **Integrations:** Meta Instagram Graph API (wired; mock without creds) · Stripe Connect (Phase 3)
 
-## Run the skeleton
+## Run locally
 
 ```bash
 npm install
 npm run dev          # http://localhost:3000
 ```
 
-The skeleton runs entirely on **mock data** (`lib/mock-data.ts`) — no Supabase or Meta credentials needed to see the screens.
+**Mock mode** — no credentials needed; falls back to `lib/mock-data.ts`.
 
-## MVP scope (single market: Bengaluru, single niche: food)
+**Live Supabase** — copy `.env.example` → `.env`, fill Supabase keys. See [wiki/development-guide.md](wiki/development-guide.md) and [docs/TEST_ACCOUNTS.md](docs/TEST_ACCOUNTS.md).
 
-1. Dual onboarding (Influencer via invite link, Business via Instagram login)
-2. Verified influencer "Lookbook" profiles with calculated engagement
-3. Business profiles with hiring-status toggle
-4. Tinder-style swipe deck of cached local influencer cards
-5. Business → influencer **interest** (right swipe) and **pitch** messaging
-6. (Phase 3) Stripe Connect escrow loop
+```bash
+npm run build        # production build + type-check
+npm run typecheck
+npm run lint
+```
 
-See `docs/01-mvp-prd.md` for full detail and `docs/tasks/` for the implementation checklist.
+## Key routes
 
-## Next step
+| Route | Who | Purpose |
+|-------|-----|---------|
+| `/` | Public | Welcome / role selection |
+| `/biz` | Business | Main business app (needs approval) |
+| `/inf` | Creator | Main creator app |
+| `/onboarding/[token]` | Creator | Invite onboarding wizard |
+| `/business-onboarding` | Business | Business onboarding wizard |
+| `/influencer/[id]` | Public | Creator Lookbook |
+| `/swipe` | Business | Legacy standalone swipe deck |
 
-Review the docs and DB schema, then we implement feature-by-feature against `docs/tasks/`.
+## Design handoff
+
+Visual prototypes live in [`designs/influenza/`](designs/influenza/). **Read [`designs/influenza/README.md`](designs/influenza/README.md)** before porting UI — it maps screens to production files and documents Supabase data rules (do not copy prototype `localStorage` auth).
+
+## Documentation map
+
+| Doc | Use when |
+|-----|----------|
+| [wiki/](wiki/) | Navigating code, building features, understanding what's done |
+| [designs/influenza/README.md](designs/influenza/README.md) | Pixel porting from Claude Design prototypes |
+| [docs/01-mvp-prd.md](docs/01-mvp-prd.md) | Product requirements (raw) |
+| [docs/02-architecture.md](docs/02-architecture.md) | Original architecture notes |
+| [docs/tasks/](docs/tasks/) | Granular checklists (may lag — see wiki implementation status) |
+| [db/schema.sql](db/schema.sql) | Database schema |
+
+## Roadmap
+
+| Phase | Focus |
+|-------|-------|
+| 1 | Manual prototype |
+| 2 | **Current** — core tech (onboarding, deck, deals, messaging UI) |
+| 3 | Stripe Connect escrow, automated metric refresh |

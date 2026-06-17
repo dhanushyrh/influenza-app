@@ -148,7 +148,7 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
   const openRt = openDealId ? dealStates[openDealId] : null;
 
   return (
-    <div style={{ height: "100svh", maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", background: T.bg, overflow: "hidden", position: "relative" }}>
+    <div style={{ height: "100%", width: "100%", maxWidth: "100%", minWidth: 0, margin: "0 auto", display: "flex", flexDirection: "column", background: T.bg, overflow: "hidden", position: "relative", boxSizing: "border-box" }}>
       {/* active tab */}
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         {tab === "discover" && (

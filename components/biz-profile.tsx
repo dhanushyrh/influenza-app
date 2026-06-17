@@ -5,7 +5,6 @@ import { Icon } from "@/components/ob-icons";
 import { Btn, Pill, OBSheet, SectionLabel, Chip, OptionCard } from "@/components/ob-primitives";
 import { AREAS, CAT_MAP, type MyBiz, type Campaign } from "@/lib/biz-data";
 import { CREATOR_CATEGORIES } from "@/lib/ob-data";
-import { PageHead } from "@/components/biz-nav";
 import { CampaignsCard } from "@/components/biz-campaigns";
 
 // Resolve a display label/emoji for the business category regardless of which
@@ -72,7 +71,7 @@ function EditSheet({ biz, onClose, onSave }: { biz: MyBiz; onClose: () => void; 
 }
 
 function ProfileCard({ children, pad = 16 }: { children: React.ReactNode; pad?: number }) {
-  return <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 20, padding: pad, marginBottom: 13 }}>{children}</div>;
+  return <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 20, padding: pad, marginBottom: 13, maxWidth: "100%", boxSizing: "border-box", overflow: "hidden" }}>{children}</div>;
 }
 
 export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPreview, onSignOut }: {
@@ -91,18 +90,18 @@ export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPrevie
   const cat = bizCatOf(biz.category);
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", background: T.bg, overflow: "hidden" }}>
-      <PageHead kicker="Your business" title="Profile" />
-
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 24px" }}>
-        {/* hero */}
-        <div style={{ position: "relative", borderRadius: 22, overflow: "hidden", padding: "22px 18px 18px", marginBottom: 14, background: `linear-gradient(160deg, ${biz.from}, ${biz.to})` }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.18) 0%, transparent 42%, rgba(20,8,10,0.34) 100%)", pointerEvents: "none" }} />
-          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14 }}>
+    <div style={{ flex: 1, minHeight: 0, minWidth: 0, width: "100%", display: "flex", flexDirection: "column", background: T.bg, overflow: "hidden", boxSizing: "border-box" }}>
+      <div style={{ flex: 1, minHeight: 0, minWidth: 0, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch" }}>
+        {/* hero — full-bleed header (matches design prototype; no separate PageHead) */}
+        <div style={{ position: "relative", padding: "max(16px, env(safe-area-inset-top)) 18px 18px", background: `linear-gradient(160deg, ${biz.from}, ${biz.to})` }}>
+          <div style={{ position: "absolute", inset: 0, opacity: 0.14, background: "radial-gradient(circle at 80% 20%, #fff 0 1.5px, transparent 2px)", backgroundSize: "30px 30px", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.20) 0%, transparent 42%, rgba(20,8,10,0.36) 100%)", pointerEvents: "none" }} />
+          <p style={{ margin: "0 0 8px", position: "relative", fontFamily: T.body, fontSize: 12, fontWeight: 700, letterSpacing: 0.5, color: "rgba(255,255,255,0.88)", textTransform: "uppercase" }}>Your business</p>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
             <div style={{ width: 68, height: 68, borderRadius: 20, overflow: "hidden", background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, boxShadow: "0 6px 18px rgba(0,0,0,0.16)", flexShrink: 0 }}>{biz.emoji}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                <h1 style={{ margin: 0, fontFamily: T.display, fontSize: 20.5, fontWeight: 700, color: "#fff", letterSpacing: -0.4, lineHeight: 1.18, textShadow: "0 2px 8px rgba(0,0,0,0.22)" }}>{biz.name}</h1>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 6, minWidth: 0 }}>
+                <h1 style={{ margin: 0, fontFamily: T.display, fontSize: 20.5, fontWeight: 700, color: "#fff", letterSpacing: -0.4, lineHeight: 1.18, textShadow: "0 2px 8px rgba(0,0,0,0.22)", overflow: "hidden", textOverflow: "ellipsis" }}>{biz.name}</h1>
                 <Icon name="verified" size={18} c="#fff" style={{ flexShrink: 0, marginTop: 3 }} />
               </div>
               <p style={{ margin: "3px 0 0", fontFamily: T.body, fontSize: 12.5, color: "rgba(255,255,255,0.92)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{biz.handle.replace(/^@/, "")} · {cat.emoji} {cat.label}</p>
@@ -110,17 +109,17 @@ export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPrevie
           </div>
         </div>
 
-        {/* white stat bar */}
-        <div style={{ display: "flex", background: "#fff", border: `1px solid ${T.line}`, borderRadius: 18, overflow: "hidden", marginBottom: 14 }}>
-          {([["Followers", kfmt(biz.followers)], ["Avg views", kfmt(biz.avgViews)], ["Engagement", biz.eng + "%"], ["Posts", String(biz.posts?.length ? biz.posts.length * 41 : 248)]] as const).map(([l, v], i, arr) => (
-            <div key={l} style={{ flex: 1, textAlign: "center", padding: "12px 4px", borderRight: i < arr.length - 1 ? `1px solid ${T.line}` : "none" }}>
-              <p style={{ margin: 0, fontFamily: T.display, fontWeight: 700, fontSize: 15, color: T.ink }}>{v}</p>
-              <p style={{ margin: "2px 0 0", fontFamily: T.body, fontSize: 9, fontWeight: 700, color: T.ink3, textTransform: "uppercase", letterSpacing: 0.3 }}>{l}</p>
+        {/* stat bar — edge-to-edge */}
+        <div style={{ display: "flex", width: "100%", background: "#fff", borderBottom: `1px solid ${T.line}`, boxSizing: "border-box" }}>
+          {([["Followers", kfmt(biz.followers)], ["Avg views", kfmt(biz.avgViews)], ["Eng.", biz.eng + "%"], ["Posts", String(biz.posts?.length ? biz.posts.length * 41 : 248)]] as const).map(([l, v], i, arr) => (
+            <div key={l} style={{ flex: 1, minWidth: 0, textAlign: "center", padding: "12px 2px", borderRight: i < arr.length - 1 ? `1px solid ${T.line}` : "none" }}>
+              <p style={{ margin: 0, fontFamily: T.display, fontWeight: 700, fontSize: 14, color: T.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</p>
+              <p style={{ margin: "2px 0 0", fontFamily: T.body, fontSize: 8.5, fontWeight: 700, color: T.ink3, textTransform: "uppercase", letterSpacing: 0.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l}</p>
             </div>
           ))}
         </div>
 
-        {/* hiring + edit */}
+        <div style={{ padding: "16px 16px calc(24px + env(safe-area-inset-bottom))", boxSizing: "border-box", maxWidth: "100%" }}>
         <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
           <button onClick={() => setSheet("hiring")} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10, padding: "10px 13px", background: hireBg, border: `1px solid ${hireBd}`, borderRadius: 14, cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: 17, flexShrink: 0 }}>{hire.emoji}</span>
@@ -145,13 +144,13 @@ export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPrevie
 
         {/* pitch credits */}
         <ProfileCard>
-          <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 13, minWidth: 0 }}>
             <div style={{ width: 46, height: 46, borderRadius: 14, background: T.roseTint, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Icon name="spark" size={24} c={T.roseDark} fill={T.roseDark} /></div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontFamily: T.display, fontWeight: 700, fontSize: 16, color: T.ink }}>{biz.credits} pitch credits</p>
-              <p style={{ margin: "1px 0 0", fontFamily: T.body, fontSize: 12, color: T.ink3 }}>Free plan · ₹1,000 buys 10 more</p>
+              <p style={{ margin: "1px 0 0", fontFamily: T.body, fontSize: 12, color: T.ink3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Free plan · ₹1,000 buys 10 more</p>
             </div>
-            <Btn variant="soft" size="sm" onClick={() => {}} style={{ width: "auto" }}>Buy</Btn>
+            <Btn variant="soft" size="sm" onClick={() => {}} style={{ width: "auto", flexShrink: 0 }}>Buy</Btn>
           </div>
         </ProfileCard>
 
@@ -186,6 +185,7 @@ export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPrevie
             <Icon name="logout" size={17} c="#b42318" /> Sign out
           </button>
         )}
+        </div>
       </div>
 
       {sheet === "details" && <EditSheet biz={biz} onClose={() => setSheet(null)} onSave={(delta) => { onUpdate(delta); setSheet(null); }} />}

@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## LLM Wiki
+
+Structured project knowledge lives in **`wiki/`** (synthesized) and **`raw/`** (source catalog). Maintenance rules: **[WIKI.md](WIKI.md)**.
+
+| Start here | Purpose |
+|------------|---------|
+| [wiki/index.md](wiki/index.md) | Wiki page catalog |
+| [wiki/file-map.md](wiki/file-map.md) | Feature → file paths |
+| [wiki/implementation-status.md](wiki/implementation-status.md) | Built vs planned |
+| [wiki/overview.md](wiki/overview.md) | Product context |
+
+When shipping features, update the relevant wiki pages and `wiki/log.md`.
+
 ## Commands
 
 ```bash
