@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const ids = await getCreatorIds();
   if (!ids) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const supabase = adminClient();
-  const { businessId, title, message, amount, deliverables } = await req.json();
+  const { businessId, campaignId, title, message, amount, deliverables } = await req.json();
   if (!businessId) return NextResponse.json({ error: "Missing businessId" }, { status: 400 });
 
   // Debit 1 credit (best-effort guard)
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
   const { data: pitch } = await supabase.from("pitches").insert({
     business_id: businessId,
     influencer_id: ids.profileId,
+    campaign_id: campaignId ?? null,
     message: message ?? "",
     title: title ?? null,
     deliverables: deliverables ?? [],
@@ -33,6 +34,17 @@ export async function POST(req: NextRequest) {
     from_role: "creator",
     credits_charged: 1,
   }).select("id").maybeSingle();
+
+  if (campaignId) {
+    const { data: camp } = await supabase.from("campaigns").select("pitches, new_pitches").eq("id", campaignId).maybeSingle();
+    if (camp) {
+      await supabase.from("campaigns").update({
+        pitches: (camp.pitches ?? 0) + 1,
+        new_pitches: (camp.new_pitches ?? 0) + 1,
+        updated_at: new Date().toISOString(),
+      }).eq("id", campaignId);
+    }
+  }
 
   // Ensure a thread exists for this pair
   await supabase.from("threads").upsert(

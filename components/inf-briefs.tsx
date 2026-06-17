@@ -242,11 +242,11 @@ export function Briefs({ me, briefs, sentKeys, credits = 0, onSendProposal, onNe
             <p style={{ margin: "6px 0 0", fontFamily: T.body, fontSize: 13, color: T.ink3 }}>Try another category.</p>
           </div>
         ) : filtered.map((o) => (
-          <OppCard key={o.key} o={o} sent={sentKeys.includes(o.key)} hasCredits={credits > 0} onView={() => setView(o)} onPitch={() => startPitch(o)} />
+          <OppCard key={o.key} o={o} sent={sentKeys.includes(o.campaignId ?? o.key)} hasCredits={credits > 0} onView={() => setView(o)} onPitch={() => startPitch(o)} />
         ))}
       </div>
 
-      {view && <BusinessSheet o={view} sent={sentKeys.includes(view.key)} onClose={() => setView(null)} onPitch={() => { setView(null); startPitch(view); }} />}
+      {view && <BusinessSheet o={view} sent={sentKeys.includes(view.campaignId ?? view.key)} onClose={() => setView(null)} onPitch={() => { setView(null); startPitch(view); }} />}
       {pitch && <ProposalSheet o={pitch} me={me} credits={credits} onClose={() => setPitch(null)} onSend={(payload) => { onSendProposal(pitch, payload); setPitch(null); }} />}
     </div>
   );

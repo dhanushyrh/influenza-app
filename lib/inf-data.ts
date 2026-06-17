@@ -93,6 +93,8 @@ export interface MyCreator extends Creator {
 // ── Opportunity (brief) from a hiring business ───────────────
 export interface Opp {
   key: string;
+  businessId: string;
+  campaignId?: string;
   biz: BizParty;
   category: string;
   cats: string[];
@@ -235,27 +237,27 @@ export const INF_DEALS: Deal[] = [
 // ── Opportunity feed ─────────────────────────────────────────
 export const OPPS: Opp[] = [
   {
-    key: "thirdwave", biz: BIZ.thirdwave, category: "food_drink", cats: ["food_drink", "lifestyle"], dist: 0.8, followers: 14200, hiring: "scouting",
+    key: "thirdwave", businessId: "thirdwave", biz: BIZ.thirdwave, category: "food_drink", cats: ["food_drink", "lifestyle"], dist: 0.8, followers: 14200, hiring: "scouting",
     brief: { title: "Cold brew menu launch",     deliv: dl(1, 1, 3), budgetLo: 8000,  budgetHi: 12000, blurb: "Launching a 4-drink cold brew flight. Want a creator who can make filter coffee look irresistible." },
     posts: ["☕", "🥐", "🧋", "🌿", "🍰", "✨"],
   },
   {
-    key: "bloom", biz: BIZ.bloom, category: "food_drink", cats: ["food_drink", "art_photography"], dist: 6.4, followers: 9800, hiring: "open",
+    key: "bloom", businessId: "bloom", biz: BIZ.bloom, category: "food_drink", cats: ["food_drink", "art_photography"], dist: 6.4, followers: 9800, hiring: "open",
     brief: { title: "Festive hamper feature",    deliv: dl(1, 2, 4), budgetLo: 6000,  budgetHi: 9000,  blurb: "Diwali hampers dropping soon. Looking for warm, beautifully styled content." },
     posts: ["🎂", "🧁", "🍮", "🍪", "🥧", "🍩"],
   },
   {
-    key: "forktale", biz: BIZ.forktale, category: "health_fitness", cats: ["health_fitness", "food_drink"], dist: 1.4, followers: 6400, hiring: "scouting",
+    key: "forktale", businessId: "forktale", biz: BIZ.forktale, category: "health_fitness", cats: ["health_fitness", "food_drink"], dist: 1.4, followers: 6400, hiring: "scouting",
     brief: { title: "New high-protein menu",     deliv: dl(1, 0, 3), budgetLo: 7000,  budgetHi: 10000, blurb: "Macro-friendly bowls for the gym crowd. Honest, high-energy reels preferred." },
     posts: ["🥗", "🥑", "🍓", "🫐", "🍲", "🥥"],
   },
   {
-    key: "toast", biz: BIZ.toast, category: "food_drink", cats: ["food_drink", "lifestyle"], dist: 3.1, followers: 11200, hiring: "open",
+    key: "toast", businessId: "toast", biz: BIZ.toast, category: "food_drink", cats: ["food_drink", "lifestyle"], dist: 3.1, followers: 11200, hiring: "open",
     brief: { title: "Weekend brunch launch",     deliv: dl(1, 0, 3), budgetLo: 6000,  budgetHi: 9000,  blurb: "All-day brunch menu launching this month. Croissant content very welcome." },
     posts: ["🥐", "🍳", "☕", "🥞", "🧇", "🥓"],
   },
   {
-    key: "nightjar", biz: BIZ.nightjar, category: "lifestyle", cats: ["lifestyle", "food_drink"], dist: 4.6, followers: 31800, hiring: "scouting",
+    key: "nightjar", businessId: "nightjar", biz: BIZ.nightjar, category: "lifestyle", cats: ["lifestyle", "food_drink"], dist: 4.6, followers: 31800, hiring: "scouting",
     brief: { title: "Rooftop sundowner menu",    deliv: dl(1, 1, 4), budgetLo: 12000, budgetHi: 20000, blurb: "New cocktail menu + skyline views. After-dark, cinematic edits." },
     posts: ["🍸", "🍹", "🥂", "🍷", "🍾", "🌃"],
   },
@@ -272,6 +274,7 @@ export function makeProposalDeal(
     id: "prop_" + opp.key + "_" + Date.now(),
     fresh: true,
     sent: true,
+    campaignId: opp.campaignId ?? null,
     business: b,
     creator: { name: me.name, handle: me.handle, emoji: me.emoji, from: me.from, to: me.to, followers: me.followers, eng: me.eng },
     title: payload.title,

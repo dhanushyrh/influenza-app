@@ -70,11 +70,12 @@ function ProfileCard({ children, pad = 16 }: { children: React.ReactNode; pad?: 
   return <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 20, padding: pad, marginBottom: 13, maxWidth: "100%", boxSizing: "border-box", overflow: "hidden" }}>{children}</div>;
 }
 
-export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPreview, onSignOut }: {
+export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onOpenCampaign, onPreview, onSignOut }: {
   biz: MyBiz;
   onUpdate: (b: Partial<MyBiz>) => void;
   campaigns?: Campaign[];
   onNewCampaign?: () => void;
+  onOpenCampaign?: (c: Campaign) => void;
   onPreview?: () => void;
   onSignOut?: () => void;
 }) {
@@ -136,7 +137,7 @@ export function Profile({ biz, onUpdate, campaigns = [], onNewCampaign, onPrevie
         <p style={{ margin: "0 0 16px", padding: "0 2px", fontFamily: T.body, fontSize: 13.5, lineHeight: 1.55, color: T.ink2 }}>{biz.bio}</p>
 
         {/* campaigns */}
-        <CampaignsCard campaigns={campaigns} onNew={() => onNewCampaign?.()} />
+        <CampaignsCard campaigns={campaigns} onNew={() => onNewCampaign?.()} onOpen={onOpenCampaign} />
 
         {/* pitch credits */}
         <ProfileCard>

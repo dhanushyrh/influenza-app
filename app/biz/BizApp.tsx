@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { T } from "@/lib/ob-tokens";
-import { MY_BIZ, MY_CAMPAIGNS, makePitchDeal, type Creator, type Deal, type DealRuntime, type MyBiz, type Attachment, type Campaign } from "@/lib/biz-data";
+import { MY_BIZ, MY_CAMPAIGNS, SEED_CAMPAIGN_PITCHES, makePitchDeal, type Creator, type Deal, type DealRuntime, type MyBiz, type Attachment, type Campaign } from "@/lib/biz-data";
 import { creatorMatchesBusinessCategory } from "@/lib/categories";
 import type { DealBundle } from "@/lib/queries";
 import { BizBottomNav, BizToast, BOTTOM_NAV_PAD, type BizTab } from "@/components/biz-nav";
@@ -11,8 +11,29 @@ import { Collabs } from "@/components/biz-collabs";
 import { Profile } from "@/components/biz-profile";
 import { Lookbook } from "@/components/biz-lookbook";
 import { ReachOutSheet } from "@/components/biz-reachout";
-import { CreateCampaignFlow } from "@/components/biz-campaigns";
+import { CreateCampaignFlow, CampaignDetail } from "@/components/biz-campaigns";
 import { DealRoom } from "@/components/deal-room";
+
+async function patch(url: string, body: unknown): Promise<any> {
+  try {
+    const r = await fetch(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return await r.json().catch(() => ({}));
+  } catch {
+    return {};
+  }
+}
+
+function seedDealsIfEmpty(bundle: DealBundle): DealBundle {
+  if (bundle.deals.length) return bundle;
+  const states: Record<string, DealRuntime> = {};
+  for (const d of SEED_CAMPAIGN_PITCHES) {
+    states[d.id] = {
+      stage: 0, amount: d.offer, log: d.log.map((e) => ({ ...e })),
+      pendingCounter: false, declined: false, reviewed: false,
+    };
+  }
+  return { deals: SEED_CAMPAIGN_PITCHES, states };
+}
 
 async function post(url: string, body: unknown): Promise<any> {
   try {
@@ -31,12 +52,14 @@ interface BizAppProps {
 }
 
 export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns }: BizAppProps) {
+  const seeded = useMemo(() => seedDealsIfEmpty(initialDeals), [initialDeals]);
   const [tab, setTab] = useState<BizTab>("discover");
   const [biz, setBiz] = useState<MyBiz>({ ...MY_BIZ, ...initialBiz });
-  const [deals, setDeals] = useState<Deal[]>(initialDeals.deals);
-  const [dealStates, setDealStates] = useState<Record<string, DealRuntime>>(initialDeals.states);
+  const [deals, setDeals] = useState<Deal[]>(seeded.deals);
+  const [dealStates, setDealStates] = useState<Record<string, DealRuntime>>(seeded.states);
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns ?? MY_CAMPAIGNS);
   const [creating, setCreating] = useState(false);
+  const [openCampaignId, setOpenCampaignId] = useState<string | null>(null);
   const [role, setRole] = useState<"business" | "creator">("business");
   const [openDealId, setOpenDealId] = useState<string | null>(null);
   const [lookbook, setLookbook] = useState<Creator | null>(null);
@@ -65,7 +88,37 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
     () => deckAll.filter((c) => creatorMatchesBusinessCategory(c, biz.category)),
     [deckAll, biz.category],
   );
-  const pitchCount = deals.filter((d) => d.fresh && dealStates[d.id]?.stage === 0).length;
+  const pitchCount = deals.filter((d) => {
+    const rt = dealStates[d.id];
+    return rt?.stage === 0 && !rt.declined && (d.sent || d.fresh);
+  }).length;
+
+  const openCampaign = campaigns.find((c) => c.id === openCampaignId) ?? null;
+
+  function openCampaignView(c: Campaign) {
+    setOpenCampaignId(c.id);
+    if (c.newPitches > 0) {
+      setCampaigns((cs) => cs.map((x) => (x.id === c.id ? { ...x, newPitches: 0 } : x)));
+      patch("/api/business/campaign", { id: c.id, action: "clear_new" });
+    }
+  }
+
+  function updateCampaignStatus(id: string, status: Campaign["status"]) {
+    setCampaigns((cs) => cs.map((x) => (x.id === id ? { ...x, status } : x)));
+    patch("/api/business/campaign", { id, status });
+    setToast(status === "live" ? "Campaign is live" : status === "closed" ? "Campaign closed" : "Campaign updated");
+  }
+
+  function acceptPitch(id: string) {
+    advance(id, "accept");
+    setDeals((ds) => ds.map((d) => (d.id === id ? { ...d, fresh: false } : d)));
+    setToast("Pitch accepted · fund escrow in Collabs");
+  }
+
+  function declinePitch(id: string) {
+    advance(id, "decline");
+    setDeals((ds) => ds.map((d) => (d.id === id ? { ...d, fresh: false } : d)));
+  }
 
   // ── deal mutations ──────────────────────────────────────────
   function mutate(id: string, fn: (rt: DealRuntime) => DealRuntime) {
@@ -178,7 +231,13 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
           />
         )}
         {tab === "collabs" && (
-          <Collabs deals={deals} states={dealStates} onOpen={(id) => setOpenDealId(id)} />
+          <Collabs
+            deals={deals}
+            states={dealStates}
+            onOpen={(id) => setOpenDealId(id)}
+            onAccept={acceptPitch}
+            onDecline={declinePitch}
+          />
         )}
         {tab === "profile" && (
           <Profile
@@ -186,6 +245,7 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
             onUpdate={(delta) => setBiz((b) => ({ ...b, ...delta }))}
             campaigns={campaigns}
             onNewCampaign={() => setCreating(true)}
+            onOpenCampaign={openCampaignView}
             onPreview={() => setToast("This is how creators see your card in their deck")}
             onSignOut={signOut}
           />
@@ -229,6 +289,19 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
           defaultCatKey={biz.category}
           onClose={() => setCreating(false)}
           onPublish={publishCampaign}
+        />
+      )}
+
+      {openCampaign && (
+        <CampaignDetail
+          campaign={openCampaign}
+          deals={deals}
+          states={dealStates}
+          onBack={() => setOpenCampaignId(null)}
+          onStatusChange={(status) => updateCampaignStatus(openCampaign.id, status)}
+          onOpenDeal={(id) => { setOpenCampaignId(null); setOpenDealId(id); }}
+          onAcceptPitch={acceptPitch}
+          onDeclinePitch={declinePitch}
         />
       )}
 

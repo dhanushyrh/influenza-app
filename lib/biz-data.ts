@@ -92,6 +92,7 @@ export interface BizParty { name: string; short: string; handle: string; emoji: 
 export interface CreatorParty { name: string; handle: string; emoji: string; from: string; to: string; followers: number; eng: number; }
 export interface Deal {
   id: string; fresh?: boolean; sent?: boolean;
+  campaignId?: string | null;
   business: BizParty; creator: CreatorParty;
   title: string; deliverables: Deliverable[];
   offer: number; counter: number | null; stage: number;
@@ -432,10 +433,63 @@ export const bizDelivStr = (d: CampaignDeliv): string =>
 
 // Mock fallback shown when Supabase is unconfigured / empty.
 export const MY_CAMPAIGNS: Campaign[] = [
-  { id: "cmp_cold", title: "Cold brew menu launch", catKey: "cafe", status: "live", pitches: 7, newPitches: 3, lo: 8000, hi: 12000, deliv: { reel: 1, post: 1, story: 3 }, blurb: "Launching a 4-drink cold brew flight. Want a creator who makes filter coffee look irresistible.", sizes: ["nano", "micro"], deadline: "2 weeks" },
-  { id: "cmp_diwali", title: "Diwali hamper feature", catKey: "bakery", status: "live", pitches: 4, newPitches: 1, lo: 6000, hi: 9000, deliv: { reel: 1, post: 2, story: 4 }, blurb: "Festive gift hampers dropping soon — warm, beautifully styled content.", sizes: ["micro"], deadline: "1 month" },
-  { id: "cmp_draft", title: "Weekend brunch pop-up", catKey: "cafe", status: "draft", pitches: 0, newPitches: 0, lo: 7000, hi: 10000, deliv: { reel: 1, post: 0, story: 3 }, blurb: "", sizes: ["nano", "micro"], deadline: "Flexible" },
+  { id: "cmp_cold", title: "Cold brew menu launch", catKey: "food_drink", status: "live", pitches: 3, newPitches: 2, lo: 8000, hi: 12000, deliv: { reel: 1, post: 1, story: 3 }, blurb: "Launching a 4-drink cold brew flight. Want a creator who makes filter coffee look irresistible.", sizes: ["nano", "micro"], deadline: "2 weeks" },
+  { id: "cmp_diwali", title: "Diwali hamper feature", catKey: "food_drink", status: "live", pitches: 1, newPitches: 0, lo: 6000, hi: 9000, deliv: { reel: 1, post: 2, story: 4 }, blurb: "Festive gift hampers dropping soon — warm, beautifully styled content.", sizes: ["micro"], deadline: "1 month" },
+  { id: "cmp_draft", title: "Weekend brunch pop-up", catKey: "food_drink", status: "draft", pitches: 0, newPitches: 0, lo: 7000, hi: 10000, deliv: { reel: 1, post: 0, story: 3 }, blurb: "", sizes: ["nano", "micro"], deadline: "Flexible" },
 ];
+
+/** Mock inbound campaign pitches (creator proposals) for demo when DB is empty. */
+export const SEED_CAMPAIGN_PITCHES: Deal[] = [
+  {
+    id: "pitch_seed_karan", fresh: true, sent: true, campaignId: "cmp_cold",
+    business: { name: MY_BIZ.name, short: MY_BIZ.short, handle: MY_BIZ.handle, emoji: MY_BIZ.emoji, from: MY_BIZ.from, to: MY_BIZ.to, area: MY_BIZ.area },
+    creator: { name: "Karan Shetty", handle: "@karaneats", emoji: "🌮", from: "#ffe0b3", to: "#ff9e54", followers: 22100, eng: 15.4 },
+    title: "Cold brew menu launch",
+    deliverables: D(1, 0, 3), offer: 10500, counter: null, stage: 0,
+    submission: { emoji: "🌮", from: "#ffe0b3", to: "#ff9e54", caption: "", link: "", likes: 0, views: 0, comments: 0 },
+    review: { rating: 5, text: "" },
+    log: [
+      { type: "date", label: "Today" },
+      { type: "text", by: "creator", time: "10:42 AM", text: "Hi Third Wave! Your cold brew flight sounds perfect for my audience — moody reel + 3 stories, shot in natural light ☕" },
+      { type: "offer", byName: "Karan", amount: 10500, prev: 10500, time: "10:42 AM" },
+    ],
+  },
+  {
+    id: "pitch_seed_priya", fresh: true, sent: true, campaignId: "cmp_cold",
+    business: { name: MY_BIZ.name, short: MY_BIZ.short, handle: MY_BIZ.handle, emoji: MY_BIZ.emoji, from: MY_BIZ.from, to: MY_BIZ.to, area: MY_BIZ.area },
+    creator: { name: "Priya Nair", handle: "@priya.plates", emoji: "🍰", from: "#ffe1d6", to: "#ffab8f", followers: 4300, eng: 19.2 },
+    title: "Cold brew menu launch",
+    deliverables: D(1, 1, 2), offer: 9000, counter: null, stage: 0,
+    submission: { emoji: "🍰", from: "#ffe1d6", to: "#ffab8f", caption: "", link: "", likes: 0, views: 0, comments: 0 },
+    review: { rating: 5, text: "" },
+    log: [
+      { type: "date", label: "Yesterday" },
+      { type: "text", by: "creator", time: "4:15 PM", text: "Would love to style the flight with pastries — reel + post combo at ₹9k 🥐" },
+      { type: "offer", byName: "Priya", amount: 9000, prev: 9000, time: "4:15 PM" },
+    ],
+  },
+  {
+    id: "pitch_seed_devika", fresh: true, sent: true, campaignId: "cmp_diwali",
+    business: { name: MY_BIZ.name, short: MY_BIZ.short, handle: MY_BIZ.handle, emoji: MY_BIZ.emoji, from: MY_BIZ.from, to: MY_BIZ.to, area: MY_BIZ.area },
+    creator: { name: "Devika Iyer", handle: "@devikadrinks", emoji: "🍸", from: "#e9d6ff", to: "#b48af0", followers: 31800, eng: 13.9 },
+    title: "Diwali hamper feature",
+    deliverables: D(1, 2, 4), offer: 8500, counter: null, stage: 0,
+    submission: { emoji: "🍸", from: "#e9d6ff", to: "#b48af0", caption: "", link: "", likes: 0, views: 0, comments: 0 },
+    review: { rating: 5, text: "" },
+    log: [
+      { type: "date", label: "Mon" },
+      { type: "text", by: "creator", time: "11:00 AM", text: "Festive hampers are my jam — cinematic reel + 2 posts + stories. ₹8.5k all in ✨" },
+      { type: "offer", byName: "Devika", amount: 8500, prev: 8500, time: "11:00 AM" },
+    ],
+  },
+];
+
+export function dealsForCampaign(campaign: Campaign, deals: Deal[]): Deal[] {
+  return deals.filter((d) =>
+    d.campaignId === campaign.id
+    || (!d.campaignId && d.sent && d.title === campaign.title && (d.stage ?? 0) === 0),
+  );
+}
 
 export function makeCampaign(f: Omit<Campaign, "id" | "status" | "pitches" | "newPitches">): Campaign {
   return { id: "cmp_" + Date.now(), status: "live", pitches: 0, newPitches: 0, ...f };

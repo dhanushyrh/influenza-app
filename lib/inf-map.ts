@@ -190,6 +190,7 @@ export function mapOpp(b: any): Opp {
   const budget = b.target_budget === "big" ? { lo: 25000, hi: 40000 } : b.target_budget === "mid" ? { lo: 8000, hi: 25000 } : { lo: 2000, hi: 8000 };
   return {
     key: b.id,
+    businessId: b.id,
     biz: party,
     category: b.category ?? "food_drink",
     cats: b.category ? [b.category] : [],
@@ -241,6 +242,8 @@ export function campaignToOpp(row: any): Opp {
   const hiring = b.hiring_status === "actively_looking" ? "open" : b.hiring_status === "not_looking" ? "closed" : "scouting";
   return {
     key: row.id,
+    businessId: b.id,
+    campaignId: row.id,
     biz: party,
     category: row.category ?? b.category ?? "food_drink",
     cats: [row.category ?? b.category ?? "food_drink"].filter(Boolean),
@@ -293,10 +296,11 @@ export function mapPitch(row: any): { deal: Deal; runtime: DealRuntime } {
   const amount = Number(row.counter ?? row.budget ?? 0);
   const deliverables: Deliverable[] = Array.isArray(row.deliverables) ? row.deliverables : [];
   const log = pitchLog(row);
-  const sent = row.from_role === "creator";
   const deal: Deal = {
     id: "pitch_" + row.id,
-    fresh: false, sent,
+    fresh: row.from_role === "creator",
+    sent: row.from_role === "creator",
+    campaignId: row.campaign_id ?? null,
     business: biz, creator,
     title: row.title ?? "Collaboration",
     deliverables,

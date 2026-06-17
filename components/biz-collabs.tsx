@@ -2,12 +2,17 @@
 import React, { useState } from "react";
 import { T, inr } from "@/lib/ob-tokens";
 import { Icon } from "@/components/ob-icons";
-import { Avatar, Pill } from "@/components/ob-primitives";
+import { Avatar, Pill, Btn } from "@/components/ob-primitives";
 import { STAGES, type Deal, type DealRuntime } from "@/lib/biz-data";
 import { PageHead } from "@/components/biz-nav";
 
 // What the BUSINESS must do next (null = ball is in the creator's court).
-function bizYourMove(stage: number): { label: string; icon: "shield" | "eye" } | null {
+function bizYourMove(stage: number, deal?: Deal, rt?: DealRuntime): { label: string; icon: "shield" | "eye" | "check" } | null {
+  if (stage === 0 && deal?.sent && rt && !rt.declined) {
+    return rt.pendingCounter
+      ? { label: "Accept counter", icon: "check" }
+      : { label: "Review pitch", icon: "check" };
+  }
   if (stage === 1) return { label: "Fund escrow", icon: "shield" };
   if (stage === 3) return { label: "Review work", icon: "eye" };
   return null;
@@ -23,23 +28,31 @@ function MiniProgress({ stage }: { stage: number }) {
   );
 }
 
-function CollabCard({ deal, rt, onOpen }: { deal: Deal; rt: DealRuntime; onOpen: () => void }) {
+function CollabCard({ deal, rt, onOpen, onAccept, onDecline }: {
+  deal: Deal; rt: DealRuntime; onOpen: () => void;
+  onAccept?: () => void; onDecline?: () => void;
+}) {
   const c = deal.creator;
   const stage = STAGES[rt.stage];
-  const move = bizYourMove(rt.stage);
+  const move = bizYourMove(rt.stage, deal, rt);
   const highlight = !!move;
   const delivText = deal.deliverables
     .map((d) => `${d.qty} ${d.qty > 1 ? (d.label === "Story" ? "Stories" : d.label + "s") : d.label}`)
     .join(" · ");
+  const showActions = rt.stage === 0 && !rt.declined && deal.sent && onAccept && onDecline;
   return (
-    <button onClick={onOpen} style={{
-      width: "100%", textAlign: "left", background: "#fff",
+    <div style={{
+      width: "100%", background: "#fff",
       border: `1px solid ${highlight ? T.roseTint2 : T.line}`,
-      borderRadius: 20, padding: 14, cursor: "pointer",
+      borderRadius: 20, padding: 14,
       display: "flex", flexDirection: "column", gap: 11,
-      boxShadow: highlight ? "0 4px 16px rgba(255,77,109,0.07)" : "0 2px 10px rgba(31,17,16,0.04)", WebkitTapHighlightColor: "transparent",
+      boxShadow: highlight ? "0 4px 16px rgba(255,77,109,0.07)" : "0 2px 10px rgba(31,17,16,0.04)",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+      <button type="button" onClick={onOpen} style={{
+        width: "100%", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer",
+        display: "flex", flexDirection: "column", gap: 11, WebkitTapHighlightColor: "transparent",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
         <Avatar emoji={c.emoji} from={c.from} to={c.to} size={46} r={14} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -63,20 +76,36 @@ function CollabCard({ deal, rt, onOpen }: { deal: Deal; rt: DealRuntime; onOpen:
           <Pill tone={stage.tone} style={{ fontSize: 10.5 }}>{stage.label}</Pill>
         )}
       </div>
-    </button>
+      </button>
+      {showActions && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <Btn variant="ghost" size="sm" onClick={onOpen} style={{ flex: 1 }}>Chat</Btn>
+          {rt.pendingCounter ? (
+            <Btn variant="primary" size="sm" icon="check" onClick={onAccept} style={{ flex: 1.3 }}>Accept · {inr(rt.amount)}</Btn>
+          ) : (
+            <>
+              <Btn variant="danger" size="sm" onClick={onDecline} style={{ flex: 0.85 }}>Pass</Btn>
+              <Btn variant="primary" size="sm" icon="check" onClick={onAccept} style={{ flex: 1 }}>Accept</Btn>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-export function Collabs({ deals, states, onOpen }: {
+export function Collabs({ deals, states, onOpen, onAccept, onDecline }: {
   deals: Deal[];
   states: Record<string, DealRuntime>;
   onOpen: (dealId: string) => void;
+  onAccept?: (dealId: string) => void;
+  onDecline?: (dealId: string) => void;
 }) {
   const [tab, setTab] = useState<"all" | "pitched" | "active" | "done">("all");
 
   const activeCount = deals.filter((d) => { const s = states[d.id]?.stage ?? 0; return s > 0 && s < 4; }).length;
   const pitchCount = deals.filter((d) => (states[d.id]?.stage ?? 0) === 0).length;
-  const moveCount = deals.filter((d) => bizYourMove(states[d.id]?.stage ?? 0)).length;
+  const moveCount = deals.filter((d) => bizYourMove(states[d.id]?.stage ?? 0, d, states[d.id])).length;
   const inEscrow = deals
     .filter((d) => { const s = states[d.id]?.stage ?? 0; return s === 2 || s === 3; })
     .reduce((a, d) => a + (states[d.id]?.amount ?? 0), 0);
@@ -91,7 +120,7 @@ export function Collabs({ deals, states, onOpen }: {
   // Surface the cards that need the business first, then by stage.
   const sorted = [...rows].sort((a, b) => {
     const sa = states[a.id]?.stage ?? 0, sb = states[b.id]?.stage ?? 0;
-    return (bizYourMove(sb) ? 1 : 0) - (bizYourMove(sa) ? 1 : 0) || sa - sb;
+    return (bizYourMove(sb, b, states[b.id]) ? 1 : 0) - (bizYourMove(sa, a, states[a.id]) ? 1 : 0) || sa - sb;
   });
 
   const tabs: [string, string][] = [
@@ -146,7 +175,16 @@ export function Collabs({ deals, states, onOpen }: {
           </div>
         ) : sorted.map((d) => {
           const rt = states[d.id] ?? { stage: d.stage, amount: d.offer, log: [], pendingCounter: false, declined: false, reviewed: false };
-          return <CollabCard key={d.id} deal={d} rt={rt} onOpen={() => onOpen(d.id)} />;
+          return (
+            <CollabCard
+              key={d.id}
+              deal={d}
+              rt={rt}
+              onOpen={() => onOpen(d.id)}
+              onAccept={onAccept ? () => onAccept(d.id) : undefined}
+              onDecline={onDecline ? () => onDecline(d.id) : undefined}
+            />
+          );
         })}
       </div>
     </div>

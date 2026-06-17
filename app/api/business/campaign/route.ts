@@ -37,8 +37,20 @@ export async function PATCH(req: NextRequest) {
   const ids = await getBusinessIds();
   if (!ids) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const supabase = adminClient();
-  const { id, status } = await req.json();
-  if (!id || !status) return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
+  const { id, status, action } = await req.json();
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  if (action === "clear_new") {
+    const { error } = await supabase
+      .from("campaigns")
+      .update({ new_pitches: 0, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("business_id", ids.businessId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!status) return NextResponse.json({ error: "Missing status" }, { status: 400 });
 
   const { error } = await supabase
     .from("campaigns")

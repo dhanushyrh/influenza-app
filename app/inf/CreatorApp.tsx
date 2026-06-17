@@ -201,12 +201,13 @@ export function CreatorApp({ initialCreator, initialCredits, initialDeals, initi
       ...prev,
       [deal.id]: { stage: 0, amount: payload.amount, log: deal.log.map((e) => ({ ...e })), pendingCounter: false, declined: false, reviewed: false },
     }));
-    setSentKeys((k) => [...k, opp.key]);
+    setSentKeys((k) => [...k, opp.campaignId ?? opp.key]);
     setCredits((c) => Math.max(0, c - 1));
     setLedger((l) => [{ id: "l_" + Date.now(), kind: "spend", label: "Pitch · " + opp.biz.short, when: "Now", amount: -1 }, ...l]);
     setToast(`Proposal sent to ${opp.biz.short} · 1 credit used`);
     post("/api/creator/proposal", {
-      businessId: opp.key,
+      businessId: opp.businessId,
+      campaignId: opp.campaignId,
       title: payload.title,
       message: payload.message,
       amount: payload.amount,
