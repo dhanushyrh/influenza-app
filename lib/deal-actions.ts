@@ -1,18 +1,29 @@
 // Shared deal state-machine writes for the creator (/inf) and business (/biz)
-// pipeline routes. A stage-0 pitch is promoted to a `deals` row on first
-// negotiation; subsequent actions mutate that row's status + jsonb log.
+// pipeline routes. A stage-0 pitch is promoted to a `deals` row on accept;
+// counter/decline/message update the pitch row until then.
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { adminClient } from "./supabase";
 import { pitchLog } from "./inf-map";
 import type { LogEvent } from "./biz-data";
 
-type Supa = ReturnType<typeof adminClient>;
+type Supa = ReturnType<typeof import("./supabase").adminClient>;
 
 const FEE_PCT = 10;
 
-/** Resolve a deal row from a client id ("pitch_<uuid>" or a deal uuid). Promotes
- *  a pitch to a draft deal (stage 0) on first touch and consumes the pitch. */
-export async function resolveDeal(supabase: Supa, clientId: string): Promise<any | null> {
+function pitchClientId(pitchId: string) {
+  return `pitch_${pitchId}`;
+}
+
+function asPitchRow(row: any) {
+  return {
+    ...row,
+    id: pitchClientId(row.id),
+    _isPitch: true,
+    log: pitchLog(row),
+  };
+}
+
+/** Resolve a deal row from a client id ("pitch_<uuid>" or a deal uuid). */
+export async function resolveDeal(supabase: Supa, clientId: string, action?: string): Promise<any | null> {
   if (clientId.startsWith("pitch_")) {
     const pitchId = clientId.slice("pitch_".length);
     const { data: existing } = await supabase.from("deals").select("*").eq("pitch_id", pitchId).maybeSingle();
@@ -20,6 +31,10 @@ export async function resolveDeal(supabase: Supa, clientId: string): Promise<any
 
     const { data: pitch } = await supabase.from("pitches").select("*").eq("id", pitchId).maybeSingle();
     if (!pitch) return null;
+
+    // Only promote to a deal row when the pitch is accepted.
+    if (action !== "accept") return asPitchRow(pitch);
+
     const amount = Number(pitch.counter ?? pitch.budget ?? 0);
     const log: LogEvent[] = pitchLog(pitch);
     const { data: deal } = await supabase.from("deals").insert({
@@ -29,7 +44,7 @@ export async function resolveDeal(supabase: Supa, clientId: string): Promise<any
       amount,
       counter: pitch.counter ?? null,
       platform_fee: Math.round((amount * FEE_PCT) / 100),
-      status: "draft",
+      status: "accepted",
       title: pitch.title ?? null,
       deliverables: pitch.deliverables ?? [],
       log,
@@ -51,6 +66,41 @@ export async function applyAction(
   actor: { role: "creator" | "business"; name: string },
   text?: string, attachment?: unknown,
 ): Promise<any> {
+  // ── Stage-0 pitch (not yet a deal row) ──
+  if (deal._isPitch) {
+    const pitchId = deal.id.replace(/^pitch_/, "");
+    const log: LogEvent[] = Array.isArray(deal.log) ? [...deal.log] : pitchLog(deal);
+    const amount = Number(deal.counter ?? deal.budget ?? 0);
+    const updates: Record<string, unknown> = { responded_at: new Date().toISOString() };
+
+    switch (action) {
+      case "accept": {
+        // resolveDeal should have promoted; fallback promote here.
+        return resolveDeal(supabase, pitchClientId(pitchId), "accept");
+      }
+      case "decline":
+        updates.status = "declined";
+        log.push({ type: "text", by: actor.role, time: "Now", text: text || "Sorry, can't take this one on right now 🙏" });
+        break;
+      case "counter": {
+        if (payload == null || Number.isNaN(payload)) return deal;
+        updates.counter = payload;
+        log.push({ type: "offer", byName: actor.name.split(" ")[0], amount: payload, prev: amount, time: "Now" });
+        break;
+      }
+      case "message":
+        log.push(attachment
+          ? { type: "text", by: actor.role, time: "Now", text: text || "", attachment: attachment as any }
+          : { type: "text", by: actor.role, time: "Now", text: text || "" });
+        break;
+      default:
+        return deal;
+    }
+
+    const { data } = await supabase.from("pitches").update(updates).eq("id", pitchId).select("*").maybeSingle();
+    return data ? { ...asPitchRow(data), log } : { ...deal, ...updates, log };
+  }
+
   const log: LogEvent[] = Array.isArray(deal.log) ? [...deal.log] : [];
   const amount = Number(deal.counter ?? deal.amount ?? 0);
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -65,10 +115,12 @@ export async function applyAction(
       updates.status = "cancelled";
       log.push({ type: "text", by: actor.role, time: "Now", text: text || "Sorry, can't take this one on right now 🙏" });
       break;
-    case "counter":
+    case "counter": {
+      if (payload == null || Number.isNaN(payload)) return deal;
       updates.counter = payload;
-      log.push({ type: "offer", byName: actor.name.split(" ")[0], amount: payload!, prev: amount, time: "Now" });
+      log.push({ type: "offer", byName: actor.name.split(" ")[0], amount: payload, prev: amount, time: "Now" });
       break;
+    }
     case "fund":
       updates.status = "funded";
       log.push({ type: "escrow", amount, time: "Now" });

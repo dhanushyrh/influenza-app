@@ -2,8 +2,9 @@
 import React, { useState, useMemo } from "react";
 import { T } from "@/lib/ob-tokens";
 import { MY_BIZ, MY_CAMPAIGNS, makePitchDeal, type Creator, type Deal, type DealRuntime, type MyBiz, type Attachment, type Campaign } from "@/lib/biz-data";
+import { creatorMatchesBusinessCategory } from "@/lib/categories";
 import type { DealBundle } from "@/lib/queries";
-import { BizBottomNav, BizToast, type BizTab } from "@/components/biz-nav";
+import { BizBottomNav, BizToast, BOTTOM_NAV_PAD, type BizTab } from "@/components/biz-nav";
 import { Discover } from "@/components/biz-discover";
 import { Search } from "@/components/biz-search";
 import { Collabs } from "@/components/biz-collabs";
@@ -59,7 +60,11 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
     window.location.href = "/";
   }
 
-  const deck = useMemo(() => [...initialDeck].sort((a, b) => a.dist - b.dist), [initialDeck]);
+  const deckAll = useMemo(() => [...initialDeck].sort((a, b) => a.dist - b.dist), [initialDeck]);
+  const deckDiscover = useMemo(
+    () => deckAll.filter((c) => creatorMatchesBusinessCategory(c, biz.category)),
+    [deckAll, biz.category],
+  );
   const pitchCount = deals.filter((d) => d.fresh && dealStates[d.id]?.stage === 0).length;
 
   // ── deal mutations ──────────────────────────────────────────
@@ -70,7 +75,7 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
   function advance(id: string, action: string, payload?: number) {
     const deal = deals.find((d) => d.id === id);
     if (!deal) return;
-    const cFirst = deal.creator.name.split(" ")[0];
+    const actorFirst = (role === "business" ? biz.name : deal.creator.name).split(" ")[0];
     mutate(id, (rt) => {
       switch (action) {
         case "accept":
@@ -80,11 +85,12 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
           break;
         case "decline":
           rt.declined = true;
-          rt.log.push({ type: "text", by: "creator", time: "Now", text: "Thanks for thinking of me — I'll have to pass this round 🙏" });
+          rt.log.push({ type: "text", by: role, time: "Now", text: role === "creator" ? "Thanks for thinking of me — I'll have to pass this round 🙏" : "Thanks — we'll pass on this one for now." });
           break;
         case "counter":
-          rt.log.push({ type: "offer", byName: cFirst, amount: payload!, prev: rt.amount, time: "Now" });
-          rt.amount = payload!; rt.pendingCounter = true;
+          if (payload == null) break;
+          rt.log.push({ type: "offer", byName: actorFirst, amount: payload, prev: rt.amount, time: "Now" });
+          rt.amount = payload; rt.pendingCounter = true;
           break;
         case "fund":
           rt.stage = 2;
@@ -150,10 +156,10 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
   return (
     <div style={{ height: "100%", width: "100%", maxWidth: "100%", minWidth: 0, margin: "0 auto", display: "flex", flexDirection: "column", background: T.bg, overflow: "hidden", position: "relative", boxSizing: "border-box" }}>
       {/* active tab */}
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingBottom: BOTTOM_NAV_PAD }}>
         {tab === "discover" && (
           <Discover
-            deck={deck}
+            deck={deckDiscover}
             onLike={(c) => setLookbook(c)}
             onPass={() => {}}
             onInfo={(c) => setLookbook(c)}
@@ -163,7 +169,8 @@ export function BizApp({ initialBiz, initialDeck, initialDeals, initialCampaigns
         )}
         {tab === "search" && (
           <Search
-            creators={deck}
+            creators={deckAll}
+            businessCategory={biz.category}
             onOpen={(c) => setLookbook(c)}
             openFilters={openFilters}
             clearOpenFilters={() => setOpenFilters(false)}

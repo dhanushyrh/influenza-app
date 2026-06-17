@@ -116,7 +116,8 @@ export function mapMyCreator(
     from: g.from, to: g.to,
     verified: !!row.published,
     available: row.available ?? true,
-    category: cats[0] ?? "cafe",
+    category: cats[0] ?? "food_drink",
+    cats,
     area: cities[0] ?? row.locations?.city ?? "Bengaluru",
     dist: 0,
     followers: stats.followers ?? 0,
@@ -138,7 +139,6 @@ export function mapMyCreator(
     joined: monthYear(row.created_at),
     city: cities[0] ?? row.locations?.city ?? "Bengaluru",
     cities,
-    cats,
     completed: extra?.completed ?? 0,
     repeatRate: extra?.repeatRate ?? 0,
     responseHrs: 2,
@@ -191,8 +191,8 @@ export function mapOpp(b: any): Opp {
   return {
     key: b.id,
     biz: party,
-    category: b.category ?? "food",
-    cats,
+    category: b.category ?? "food_drink",
+    cats: b.category ? [b.category] : [],
     dist: 0,
     followers: stats.followers ?? 0,
     hiring: hiring as Opp["hiring"],
@@ -242,8 +242,8 @@ export function campaignToOpp(row: any): Opp {
   return {
     key: row.id,
     biz: party,
-    category: row.category ?? b.category ?? "food",
-    cats: [],
+    category: row.category ?? b.category ?? "food_drink",
+    cats: [row.category ?? b.category ?? "food_drink"].filter(Boolean),
     dist: 0,
     followers: stats.followers ?? 0,
     hiring: hiring as Opp["hiring"],
@@ -270,11 +270,18 @@ export function pitchLog(row: any): LogEvent[] {
     { type: "date", label: relTime(row.created_at) },
     { type: "text", by, time: relTime(row.created_at), text: row.message ?? "" },
   ];
-  const amt = Number(row.budget ?? 0);
-  if (by === "creator" && amt) {
-    log.push({ type: "offer", byName: "You", amount: amt, prev: amt, time: relTime(row.created_at) });
+  const budget = Number(row.budget ?? 0);
+  const counter = row.counter != null ? Number(row.counter) : null;
+  if (by === "creator" && budget) {
+    log.push({ type: "offer", byName: "You", amount: budget, prev: budget, time: relTime(row.created_at) });
   } else if (by === "business") {
     log.unshift({ type: "brief", by: "business", time: relTime(row.created_at) });
+    if (budget) log.push({ type: "offer", byName: "Business", amount: budget, prev: budget, time: relTime(row.created_at) });
+  }
+  if (counter != null && counter !== budget) {
+    const counterBy = by === "business" ? "creator" : "business";
+    const name = counterBy === "creator" ? "Creator" : "Business";
+    log.push({ type: "offer", byName: name, amount: counter, prev: budget, time: relTime(row.responded_at ?? row.created_at) });
   }
   return log;
 }
@@ -300,9 +307,16 @@ export function mapPitch(row: any): { deal: Deal; runtime: DealRuntime } {
     review: { rating: 5, text: "" },
     log,
   };
+  const hasCounter = row.counter != null && Number(row.counter) !== Number(row.budget ?? 0);
   return {
     deal,
-    runtime: { stage: 0, amount, log: log.map((e) => ({ ...e })), pendingCounter: sent, declined: row.status === "declined", reviewed: false },
+    runtime: {
+      stage: 0, amount: Number(row.counter ?? row.budget ?? 0),
+      log: log.map((e) => ({ ...e })),
+      pendingCounter: hasCounter,
+      declined: row.status === "declined",
+      reviewed: false,
+    },
   };
 }
 
@@ -328,11 +342,14 @@ export function mapDeal(row: any): { deal: Deal; runtime: DealRuntime } {
     review,
     log,
   };
+  const lastOffer = [...log].reverse().find((e) => e.type === "offer") as { byName?: string; amount?: number } | undefined;
+  const pendingCounter = stage === 0 && !!lastOffer && row.counter != null;
   return {
     deal,
     runtime: {
       stage, amount, log: log.map((e) => ({ ...e })),
-      pendingCounter: false, declined: row.status === "cancelled",
+      pendingCounter,
+      declined: row.status === "cancelled",
       reviewed: log.some((e) => e.type === "review"),
     },
   };

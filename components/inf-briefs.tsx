@@ -7,6 +7,7 @@ import { HiringPill, PageHead } from "@/components/biz-nav";
 import { CreditCoin, CreditPill } from "@/components/inf-credits";
 import { type MyCreator, type Opp } from "@/lib/inf-data";
 import { CAT, catOf, type Deliverable } from "@/lib/biz-data";
+import { briefFilterCategories, categoryMeta, oppMatchesCreatorCategories } from "@/lib/categories";
 
 const plr = (label: string, qty: number) => qty > 1 ? (label === "Story" ? "Stories" : label + "s") : label;
 const budgetStr = (lo: number, hi: number) => `${inr(lo)}–${inr(hi).replace("₹", "")}`;
@@ -202,8 +203,22 @@ export function Briefs({ me, briefs, sentKeys, credits = 0, onSendProposal, onNe
 
   const startPitch = (o: Opp) => credits > 0 ? setPitch(o) : onNeedCredits?.();
 
-  const filtered = useMemo(() => (cat === "all" ? briefs : briefs.filter((o) => (o.cats ?? [o.category]).includes(cat))), [cat, briefs]);
-  const cats = [{ key: "all", emoji: "✨", label: "All" }, ...CAT];
+  const creatorCats = me.cats?.length ? me.cats : [me.category];
+  const filtered = useMemo(
+    () => briefs.filter((o) => {
+      if (cat !== "all" && !oppMatchesCreatorCategories(o, [cat])) return false;
+      return oppMatchesCreatorCategories(o, creatorCats);
+    }),
+    [cat, briefs, creatorCats],
+  );
+  const cats = [
+    { key: "all", emoji: "✨", label: "All" },
+    ...briefFilterCategories(creatorCats).map((c) => ({
+      key: c.slug,
+      emoji: categoryMeta(c.slug).emoji,
+      label: c.label,
+    })),
+  ];
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: T.bg, overflow: "hidden" }}>

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const { dealId, action, payload, text, attachment } = await req.json();
   if (!dealId || !action) return NextResponse.json({ error: "Missing dealId/action" }, { status: 400 });
 
-  const deal = await resolveDeal(supabase, dealId);
+  const deal = await resolveDeal(supabase, dealId, action);
   if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
   if (deal.business_id !== ids.businessId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 

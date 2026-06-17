@@ -6,6 +6,9 @@ import { Pill } from "@/components/ob-primitives";
 
 export type BizTab = "discover" | "search" | "collabs" | "profile";
 
+/** Reserve space so scrollable tab content clears the fixed bottom nav. */
+export const BOTTOM_NAV_PAD = "calc(68px + env(safe-area-inset-bottom))";
+
 // ── Custom tab glyphs ──
 function TabGlyph({ name, active }: { name: BizTab; active: boolean }) {
   const c = active ? T.rose : T.ink3;
@@ -55,12 +58,15 @@ export function BizBottomNav({ tab, setTab, badges = {} }: {
   ];
   return (
     <div style={{
-      flexShrink: 0, display: "flex",
-      background: "rgba(255,255,255,0.92)",
+      flexShrink: 0, display: "flex", width: "100%",
+      position: "fixed", left: "50%", bottom: 0, transform: "translateX(-50%)",
+      maxWidth: 480, zIndex: 20,
+      background: "rgba(255,255,255,0.96)",
       backdropFilter: "blur(18px) saturate(160%)",
       WebkitBackdropFilter: "blur(18px) saturate(160%)",
       borderTop: `1px solid ${T.line}`,
-      padding: "8px 8px 22px",
+      padding: "8px 8px calc(10px + env(safe-area-inset-bottom))",
+      boxSizing: "border-box",
     }}>
       {tabs.map((t) => {
         const on = tab === t.k;

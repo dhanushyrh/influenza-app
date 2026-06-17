@@ -116,7 +116,7 @@ export function CreateCampaignFlow({ defaultCatKey = "cafe", onClose, onPublish 
   const [done, setDone] = useState(false);
   const [burst, setBurst] = useState(0);
   const [f, setF] = useState({
-    title: "", catKey: CAT_MAP[defaultCatKey] ? defaultCatKey : "cafe", blurb: "",
+    title: "", catKey: CAT_MAP[defaultCatKey] ? defaultCatKey : "food_drink", blurb: "",
     deliv: { reel: 1, post: 1, story: 2 } as CampaignDeliv, lo: 8000, hi: 12000,
     sizes: ["nano", "micro"] as string[], deadline: "2 weeks",
   });

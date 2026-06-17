@@ -3,18 +3,14 @@ import React, { useState } from "react";
 import { T, kfmt } from "@/lib/ob-tokens";
 import { Icon } from "@/components/ob-icons";
 import { Btn, Pill, OBSheet, SectionLabel, Chip, OptionCard } from "@/components/ob-primitives";
-import { AREAS, CAT_MAP, type MyBiz, type Campaign } from "@/lib/biz-data";
+import { categoryMeta } from "@/lib/categories";
+import { AREAS, type MyBiz, type Campaign } from "@/lib/biz-data";
 import { CREATOR_CATEGORIES } from "@/lib/ob-data";
 import { CampaignsCard } from "@/components/biz-campaigns";
 
-// Resolve a display label/emoji for the business category regardless of which
-// taxonomy it was stored in (CAT_MAP key/label or CREATOR_CATEGORIES slug).
 function bizCatOf(category: string): { emoji: string; label: string } {
-  if (CAT_MAP[category]) return CAT_MAP[category];
-  const cc = CREATOR_CATEGORIES.find((c) => c.slug === category);
-  if (cc) return { emoji: "🏷️", label: cc.label };
-  const byLabel = Object.values(CAT_MAP).find((v) => v.label === category);
-  return byLabel ?? { emoji: "🏷️", label: category || "Business" };
+  const m = categoryMeta(category);
+  return { emoji: m.emoji, label: m.label };
 }
 
 const HIRING_OPTS = [

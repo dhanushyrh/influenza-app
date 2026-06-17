@@ -1,16 +1,21 @@
 // Business app types and mock data (deck, deals, taxonomy).
+import { categoryMeta, normalizeCategorySlug } from "./categories";
+import { CREATOR_CATEGORIES } from "./ob-data";
 
-// ── Taxonomy ────────────────────────────────────────────────
-export const CAT_MAP: Record<string, { emoji: string; label: string }> = {
-  cafe:    { emoji: "☕", label: "Café & Coffee" },
-  street:  { emoji: "🌮", label: "Street Food" },
-  fine:    { emoji: "🍷", label: "Fine Dining" },
-  bakery:  { emoji: "🧁", label: "Bakery & Desserts" },
-  healthy: { emoji: "🥗", label: "Healthy & Fitness" },
-  bar:     { emoji: "🍸", label: "Bars & Nightlife" },
+// ── Taxonomy (creator_categories slugs — business picks one, creators pick many) ──
+export const CAT = CREATOR_CATEGORIES.map((c) => ({
+  key: c.slug,
+  emoji: categoryMeta(c.slug).emoji,
+  label: c.label,
+}));
+/** @deprecated use categoryMeta from lib/categories — kept for call-site compat */
+export const CAT_MAP: Record<string, { emoji: string; label: string }> = Object.fromEntries(
+  CAT.map((c) => [c.key, { emoji: c.emoji, label: c.label }]),
+);
+export const catOf = (k: string) => {
+  const m = categoryMeta(k);
+  return { emoji: m.emoji, label: m.label };
 };
-export const CAT = Object.entries(CAT_MAP).map(([key, v]) => ({ key, ...v }));
-export const catOf = (k: string) => CAT_MAP[k] ?? CAT_MAP.cafe;
 
 export const SIZE = [
   { key: "nano",  label: "Nano",  range: "1k – 10k",   lo: 0,      hi: 10000 },
@@ -54,7 +59,9 @@ export interface Creator {
   id: string; name: string; handle: string; emoji: string;
   from: string; to: string;
   verified: boolean; available: boolean;
-  category: string; area: string; dist: number;
+  category: string; /** primary slug */
+  cats?: string[]; /** all selected creator_categories slugs */
+  area: string; dist: number;
   followers: number; avgViews: number; avgLikes: number; avgComments: number; eng: number;
   ageDom: string;
   age: Record<string, number>;
@@ -114,7 +121,7 @@ export const MY_BIZ: MyBiz = {
   emoji: "☕", from: "#ffe4cc", to: "#ffb27a",
   area: "Indiranagar", city: "Bengaluru", cities: ["Bengaluru"],
   bio: "Specialty coffee roasters · 3 cafés across Bengaluru. Community-first, always brewing something new.",
-  category: "food", cats: ["food", "lifestyle"],
+  category: "food_drink", cats: ["food_drink"],
   followers: 14200, avgLikes: 720, avgViews: 5200, eng: 5.4,
   hiring: "scouting", credits: 5, budget: "mid", creatorSize: ["nano", "micro"],
   posts: ["☕","🥐","🌿","🧋","🍰","✨"],
@@ -129,7 +136,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_aisha", name: "Aisha Khan", handle: "@aisha.eats", emoji: "🍜",
     from: "#ffd1c4", to: "#ff8f74", verified: true, available: true,
-    category: "cafe", area: "Indiranagar", dist: 0.8,
+    category: "food_drink", cats: ["food_drink"], area: "Indiranagar", dist: 0.8,
     followers: 8200, avgViews: 21400, avgLikes: 1280, avgComments: 96, eng: 16.8,
     ageDom: "18–24", age: { "13–17": 4, "18–24": 47, "25–34": 33, "35–44": 11, "45+": 5 },
     gender: { f: 64, m: 35 }, rating: 4.9, reviews: 23, rateFrom: 6000,
@@ -152,7 +159,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_karan", name: "Karan Shetty", handle: "@karaneats", emoji: "🌮",
     from: "#ffe0b3", to: "#ff9e54", verified: true, available: true,
-    category: "street", area: "Koramangala", dist: 3.1,
+    category: "food_drink", cats: ["food_drink"], area: "Koramangala", dist: 3.1,
     followers: 22100, avgViews: 64200, avgLikes: 3180, avgComments: 214, eng: 15.4,
     ageDom: "18–24", age: { "13–17": 6, "18–24": 44, "25–34": 34, "35–44": 12, "45+": 4 },
     gender: { f: 41, m: 58 }, rating: 4.8, reviews: 41, rateFrom: 9000,
@@ -175,7 +182,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_priya", name: "Priya Nair", handle: "@priya.plates", emoji: "🍰",
     from: "#ffe1d6", to: "#ffab8f", verified: true, available: false,
-    category: "bakery", area: "Jayanagar", dist: 6.4,
+    category: "food_drink", cats: ["food_drink"], area: "Jayanagar", dist: 6.4,
     followers: 4300, avgViews: 11200, avgLikes: 740, avgComments: 86, eng: 19.2,
     ageDom: "25–34", age: { "13–17": 2, "18–24": 31, "25–34": 46, "35–44": 16, "45+": 5 },
     gender: { f: 78, m: 21 }, rating: 5.0, reviews: 17, rateFrom: 4000,
@@ -198,7 +205,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_rohan", name: "Rohan Mehta", handle: "@rohan.bites", emoji: "🍵",
     from: "#e6f0d8", to: "#a7c47a", verified: true, available: true,
-    category: "cafe", area: "HSR Layout", dist: 5.2,
+    category: "food_drink", cats: ["food_drink"], area: "HSR Layout", dist: 5.2,
     followers: 15400, avgViews: 38200, avgLikes: 1980, avgComments: 142, eng: 13.8,
     ageDom: "25–34", age: { "13–17": 3, "18–24": 38, "25–34": 41, "35–44": 13, "45+": 5 },
     gender: { f: 52, m: 47 }, rating: 4.7, reviews: 34, rateFrom: 7000,
@@ -221,7 +228,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_sneha", name: "Sneha Rao", handle: "@snehaforks", emoji: "🥗",
     from: "#dCeccb", to: "#9cc079", verified: false, available: true,
-    category: "healthy", area: "Indiranagar", dist: 1.4,
+    category: "food_drink", cats: ["food_drink", "health_fitness"], area: "Indiranagar", dist: 1.4,
     followers: 6800, avgViews: 15600, avgLikes: 880, avgComments: 74, eng: 14.0,
     ageDom: "25–34", age: { "13–17": 2, "18–24": 34, "25–34": 44, "35–44": 15, "45+": 5 },
     gender: { f: 71, m: 28 }, rating: 4.8, reviews: 12, rateFrom: 5000,
@@ -244,7 +251,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_devika", name: "Devika Iyer", handle: "@devikadrinks", emoji: "🍸",
     from: "#e9d6ff", to: "#b48af0", verified: true, available: true,
-    category: "bar", area: "MG Road", dist: 4.6,
+    category: "food_drink", cats: ["food_drink", "lifestyle"], area: "MG Road", dist: 4.6,
     followers: 31800, avgViews: 92400, avgLikes: 4120, avgComments: 286, eng: 13.9,
     ageDom: "25–34", age: { "13–17": 0, "18–24": 36, "25–34": 47, "35–44": 13, "45+": 4 },
     gender: { f: 58, m: 41 }, rating: 4.9, reviews: 52, rateFrom: 14000,
@@ -267,7 +274,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_meera", name: "Meera Pillai", handle: "@meera.fineplate", emoji: "🍷",
     from: "#f0d6c0", to: "#d0a070", verified: true, available: false,
-    category: "fine", area: "Whitefield", dist: 12.8,
+    category: "food_drink", cats: ["food_drink"], area: "Whitefield", dist: 12.8,
     followers: 54200, avgViews: 118000, avgLikes: 5240, avgComments: 312, eng: 10.2,
     ageDom: "35–44", age: { "13–17": 0, "18–24": 18, "25–34": 42, "35–44": 28, "45+": 12 },
     gender: { f: 61, m: 38 }, rating: 4.9, reviews: 67, rateFrom: 22000,
@@ -290,7 +297,7 @@ export const CREATORS: Creator[] = [
   {
     id: "c_arjun", name: "Arjun Das", handle: "@arjun.brews", emoji: "🍺",
     from: "#ffe0b0", to: "#e0a040", verified: false, available: true,
-    category: "bar", area: "Koramangala", dist: 3.6,
+    category: "food_drink", cats: ["food_drink", "lifestyle"], area: "Koramangala", dist: 3.6,
     followers: 11900, avgViews: 27800, avgLikes: 1340, avgComments: 108, eng: 12.1,
     ageDom: "25–34", age: { "13–17": 0, "18–24": 40, "25–34": 43, "35–44": 12, "45+": 5 },
     gender: { f: 38, m: 61 }, rating: 4.6, reviews: 19, rateFrom: 6000,

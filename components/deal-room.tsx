@@ -532,7 +532,12 @@ function SubmitSheet({ open, onClose, deal, onConfirm }: { open: boolean; onClos
 
 function CounterSheet({ open, onClose, base, onConfirm }: { open: boolean; onClose: () => void; base: number; onConfirm: (v: number) => void }) {
   const presets = [base, Math.round(base * 1.15 / 500) * 500, Math.round(base * 1.3 / 500) * 500];
-  const [val, setVal] = useState(presets[1]);
+  const [val, setVal] = useState(presets[1] || base);
+  useEffect(() => {
+    if (!open) return;
+    const mid = Math.round(base * 1.15 / 500) * 500;
+    setVal(mid > 0 ? mid : base);
+  }, [open, base]);
   return (
     <OBSheet open={open} onClose={onClose} title="Counter-offer" accent="rose">
       <p style={{ margin: "0 0 14px", fontFamily: T.body, fontSize: 13.5, lineHeight: 1.5, color: T.ink2 }}>

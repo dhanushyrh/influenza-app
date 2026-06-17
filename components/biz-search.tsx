@@ -4,6 +4,7 @@ import { T, inr, kfmt } from "@/lib/ob-tokens";
 import { Icon } from "@/components/ob-icons";
 import { Btn, Avatar, Chip, OBSheet, SectionLabel, Toggle } from "@/components/ob-primitives";
 import { CAT, SIZE, AGE_BUCKETS, AREAS, BUDGETS, catOf, sizeOf, type Creator } from "@/lib/biz-data";
+import { creatorMatchesFilterCategories } from "@/lib/categories";
 import { PageHead, BizSegmented } from "@/components/biz-nav";
 
 interface Filters {
@@ -21,7 +22,7 @@ function applyFilters(list: Creator[], f: Filters, q: string) {
   const qq = q.trim().toLowerCase();
   return list.filter((c) => {
     if (qq && !(`${c.name} ${c.handle} ${catOf(c.category).label}`.toLowerCase().includes(qq))) return false;
-    if (f.cats.length && !f.cats.includes(c.category)) return false;
+    if (f.cats.length && !creatorMatchesFilterCategories(c, f.cats)) return false;
     if (f.ages.length && !f.ages.includes(c.ageDom)) return false;
     if (f.sizes.length && !f.sizes.includes(sizeOf(c.followers))) return false;
     if (c.eng < f.minEng) return false;
@@ -161,10 +162,11 @@ function ListRow({ c, onOpen, showRates }: { c: Creator; onOpen: () => void; sho
   );
 }
 
-export function Search({ openFilters, clearOpenFilters, onOpen, showRates, creators }: {
+export function Search({ openFilters, clearOpenFilters, onOpen, showRates, creators, businessCategory }: {
   openFilters?: boolean; clearOpenFilters?: () => void;
   onOpen: (c: Creator) => void; showRates?: boolean;
   creators: Creator[];
+  businessCategory?: string;
 }) {
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>(EMPTY);

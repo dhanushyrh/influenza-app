@@ -23,6 +23,7 @@ import {
   type MyCreator, type Opp, type CreditLedgerEntry, type Referral, type Promo,
 } from "./inf-data";
 import { CREATORS, MY_CAMPAIGNS, type Creator, type Deal, type DealRuntime, type Campaign } from "./biz-data";
+import { oppMatchesCreatorCategories } from "./categories";
 import {
   mapMyCreator, mapOpp, mapPitch, mapDeal, mapLedger, mapReferral, mapPromo,
   mapCampaign, campaignToOpp,
@@ -208,10 +209,24 @@ export async function getMyCreator(profileId: string): Promise<MyCreator> {
   }
 }
 
-export async function getBriefs(_profileId: string): Promise<Opp[]> {
-  if (!isSupabaseConfigured) return OPPS;
+export async function getBriefs(profileId: string): Promise<Opp[]> {
+  const mockMine = MY_CREATOR.cats ?? [];
+  const mockFiltered = mockMine.length
+    ? OPPS.filter((o) => oppMatchesCreatorCategories(o, mockMine))
+    : OPPS;
+  if (!isSupabaseConfigured) return mockFiltered;
   try {
     const supabase = adminClient();
+
+    const { data: prof } = await supabase
+      .from("influencer_profiles")
+      .select("creator_categories")
+      .eq("id", profileId)
+      .maybeSingle();
+    const creatorCats: string[] = Array.isArray(prof?.creator_categories) ? prof.creator_categories : [];
+
+    const filterOpps = (list: Opp[]) =>
+      creatorCats.length ? list.filter((o) => oppMatchesCreatorCategories(o, creatorCats)) : list;
 
     // Prefer live campaigns from approved businesses — these are the real briefs.
     const { data: camps } = await supabase
@@ -228,7 +243,7 @@ export async function getBriefs(_profileId: string): Promise<Opp[]> {
       .eq("business_profiles.approved", true)
       .order("created_at", { ascending: false })
       .limit(30);
-    if (camps && camps.length > 0) return camps.map(campaignToOpp);
+    if (camps && camps.length > 0) return filterOpps(camps.map(campaignToOpp));
 
     // Fallback: derive a brief per approved business (legacy behaviour).
     const { data, error } = await supabase
@@ -242,10 +257,10 @@ export async function getBriefs(_profileId: string): Promise<Opp[]> {
       `)
       .eq("approved", true)
       .limit(30);
-    if (error || !data || data.length === 0) return OPPS;
-    return data.map(mapOpp);
+    if (error || !data || data.length === 0) return mockFiltered;
+    return filterOpps(data.map(mapOpp));
   } catch {
-    return OPPS;
+    return mockFiltered;
   }
 }
 

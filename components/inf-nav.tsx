@@ -5,6 +5,9 @@ import { Icon } from "@/components/ob-icons";
 
 export type InfTab = "home" | "briefs" | "collabs" | "payouts" | "profile";
 
+/** Reserve space so scrollable tab content clears the fixed bottom nav. */
+export const INF_BOTTOM_NAV_PAD = "calc(68px + env(safe-area-inset-bottom))";
+
 function InfTabGlyph({ name, active }: { name: InfTab; active: boolean }) {
   const c = active ? T.rose : T.ink3;
   const w = active ? 2.1 : 1.85;
@@ -62,12 +65,15 @@ export function InfBottomNav({ tab, setTab, badges = {} }: {
   ];
   return (
     <div style={{
-      flexShrink: 0, display: "flex",
-      background: "rgba(255,255,255,0.92)",
+      flexShrink: 0, display: "flex", width: "100%",
+      position: "fixed", left: "50%", bottom: 0, transform: "translateX(-50%)",
+      maxWidth: 480, zIndex: 20,
+      background: "rgba(255,255,255,0.96)",
       backdropFilter: "blur(18px) saturate(160%)",
       WebkitBackdropFilter: "blur(18px) saturate(160%)",
       borderTop: `1px solid ${T.line}`,
-      padding: "8px 6px calc(20px + env(safe-area-inset-bottom))",
+      padding: "8px 6px calc(10px + env(safe-area-inset-bottom))",
+      boxSizing: "border-box",
     }}>
       {tabs.map((t) => {
         const on = tab === t.k;

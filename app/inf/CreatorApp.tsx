@@ -8,7 +8,7 @@ import {
 } from "@/lib/inf-data";
 import { type Deal, type DealRuntime, type Attachment, type Deliverable } from "@/lib/biz-data";
 import type { CreatorCredits, DealBundle } from "@/lib/queries";
-import { InfBottomNav, InfToast, type InfTab } from "@/components/inf-nav";
+import { InfBottomNav, InfToast, INF_BOTTOM_NAV_PAD, type InfTab } from "@/components/inf-nav";
 import { InfHome } from "@/components/inf-home";
 import { Briefs } from "@/components/inf-briefs";
 import { InfCollabs } from "@/components/inf-collabs";
@@ -156,8 +156,9 @@ export function CreatorApp({ initialCreator, initialCredits, initialDeals, initi
           rt.log.push({ type: "text", by: "creator", time: "Now", text: "Thanks so much for thinking of me — I can't take this one on right now 🙏" });
           break;
         case "counter":
-          rt.log.push({ type: "offer", byName: meFirst, amount: payload!, prev: rt.amount, time: "Now" });
-          rt.amount = payload!; rt.pendingCounter = true;
+          if (payload == null) break;
+          rt.log.push({ type: "offer", byName: meFirst, amount: payload, prev: rt.amount, time: "Now" });
+          rt.amount = payload; rt.pendingCounter = true;
           break;
         case "fund":
           rt.stage = 2;
@@ -198,7 +199,7 @@ export function CreatorApp({ initialCreator, initialCredits, initialDeals, initi
     setDeals((ds) => [deal, ...ds]);
     setDealStates((prev) => ({
       ...prev,
-      [deal.id]: { stage: 0, amount: payload.amount, log: deal.log.map((e) => ({ ...e })), pendingCounter: true, declined: false, reviewed: false },
+      [deal.id]: { stage: 0, amount: payload.amount, log: deal.log.map((e) => ({ ...e })), pendingCounter: false, declined: false, reviewed: false },
     }));
     setSentKeys((k) => [...k, opp.key]);
     setCredits((c) => Math.max(0, c - 1));
@@ -226,7 +227,7 @@ export function CreatorApp({ initialCreator, initialCredits, initialDeals, initi
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg, position: "relative", overflow: "hidden" }}>
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingBottom: INF_BOTTOM_NAV_PAD }}>
         {tab === "home" && (
           <InfHome me={me} setMe={setMe} deals={deals} states={dealStates} briefs={briefs} onOpenDeal={(id) => setOpenDealId(id)} onGoBriefs={() => setTab("briefs")} />
         )}
@@ -255,7 +256,7 @@ export function CreatorApp({ initialCreator, initialCredits, initialDeals, initi
 
       <InfBottomNav tab={tab} setTab={setTab} badges={{ collabs: reqCount || undefined }} />
 
-      {openDeal && (
+      {openDeal && dealStates[openDealId!] && (
         <div style={{ position: "absolute", inset: 0, zIndex: 75, background: T.bg }}>
           <DealRoom
             deal={openDeal}
